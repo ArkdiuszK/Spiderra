@@ -1,9 +1,13 @@
 import React, { useState, useMemo, useCallback, memo, useEffect } from 'react';
 
-const API_URL = "http://localhost:4242"; 
+// --- KONFIGURACJA API ---
+// Automatyczne wykrywanie środowiska:
+// - Na produkcji (Netlify) używamy funkcji serverless: /.netlify/functions
+// - Lokalnie używamy Twojego server.js: http://localhost:4242
+const isProduction = window.location.hostname !== 'localhost';
+const API_URL = isProduction ? '/.netlify/functions' : 'http://localhost:4242';
 
 // --- PRZYŚPIESZONE ŁADOWANIE TAILWINDA ---
-// Wstrzykujemy skrypt natychmiast przy ładowaniu pliku, aby przeglądarka zaczęła go pobierać jak najszybciej.
 if (typeof document !== 'undefined' && !document.getElementById('tailwind-cdn')) {
   const script = document.createElement('script');
   script.id = 'tailwind-cdn';
@@ -42,9 +46,6 @@ const Icons = {
 };
 
 const MOCK_PRODUCTS_DATA = [
-  { id: 1, name: 'Chromatopelma cyaneopubescens', latin: 'Greenbottle Blue', type: 'spider', price: 120.00, image: 'https://images.unsplash.com/photo-1548858881-80590a5525bc?auto=format&fit=crop&w=400&q=80', desc: 'L3/L4. Pięknie wybarwiony, idealny na start.' },
-  { id: 2, name: 'Caribena versicolor', latin: 'Antilles Pinktoe', type: 'spider', price: 85.00, image: 'https://images.unsplash.com/photo-1542646274-9549925206f5?auto=format&fit=crop&w=400&q=80', desc: 'Nadrzewny klejnot. L2. Bardzo łagodny.' },
-  { id: 5, name: 'Terrarium Szklane 20x20x30', latin: 'Akcesoria', type: 'gear', price: 145.00, image: 'https://images.unsplash.com/photo-1621252179027-94459d278660?auto=format&fit=crop&w=400&q=80', desc: 'Gilotyna, wentylacja góra-dół. Idealne dla nadrzewnych.' }
 ];
 
 const useCart = () => {
@@ -240,10 +241,14 @@ export default function App() {
     }
   }, []);
 
+  // Endpoint do pobierania produktów
+  // Jeśli jesteśmy na produkcji, używamy endpointu serverless 'get-products'
+  // Jeśli lokalnie, używamy '/products' z server.js (o ile jest uruchomiony)
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`${API_URL}/products`);
+        const endpoint = isProduction ? `${API_URL}/get-products` : `${API_URL}/products`;
+        const res = await fetch(endpoint);
         if (!res.ok) throw new Error();
         const data = await res.json();
         setProducts(data.length > 0 ? data : MOCK_PRODUCTS_DATA);
@@ -282,7 +287,6 @@ export default function App() {
   }, []);
 
   // DOPÓKI TAILWIND NIE JEST GOTOWY, WYŚWIETLAMY CZYSTY EKRAN ŁADOWANIA
-  // Zapobiega to mignięciu niesformatowanego tekstu przed załadowaniem stylów.
   if (!isTailwindReady) {
     return (
       <div style={{ 
