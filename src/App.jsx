@@ -2,6 +2,15 @@ import React, { useState, useMemo, useCallback, memo, useEffect } from 'react';
 
 const API_URL = "http://localhost:4242"; 
 
+// --- PRZYŚPIESZONE ŁADOWANIE TAILWINDA ---
+// Wstrzykujemy skrypt natychmiast przy ładowaniu pliku, aby przeglądarka zaczęła go pobierać jak najszybciej.
+if (typeof document !== 'undefined' && !document.getElementById('tailwind-cdn')) {
+  const script = document.createElement('script');
+  script.id = 'tailwind-cdn';
+  script.src = "https://cdn.tailwindcss.com";
+  document.head.appendChild(script);
+}
+
 // --- IKONY (Zoptymalizowane inline SVG) ---
 const IconBase = ({ children, className, ...props }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>
@@ -38,7 +47,6 @@ const MOCK_PRODUCTS_DATA = [
   { id: 5, name: 'Terrarium Szklane 20x20x30', latin: 'Akcesoria', type: 'gear', price: 145.00, image: 'https://images.unsplash.com/photo-1621252179027-94459d278660?auto=format&fit=crop&w=400&q=80', desc: 'Gilotyna, wentylacja góra-dół. Idealne dla nadrzewnych.' }
 ];
 
-// --- HOOK KOSZYKA ---
 const useCart = () => {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -70,7 +78,6 @@ const useCart = () => {
   return { cart, isCartOpen, setIsCartOpen, toast, addToCart, removeFromCart, updateQty, cartTotal, cartCount, showToast };
 };
 
-// --- WIDOKI ---
 const HomeView = memo(({ navigateTo }) => (
   <div className="relative min-h-[70vh] flex items-center justify-center animate-fade-in overflow-hidden rounded-3xl">
     <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-blue-50 -z-10"></div>
@@ -198,22 +205,38 @@ const ShopView = memo(({ addToCart, products, loading }) => {
   );
 });
 
-// --- KOMPONENT GŁÓWNY ---
 export default function App() {
   const [activeView, setActiveView] = useState('home');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isTailwindReady, setIsTailwindReady] = useState(false);
   
   const { cart, isCartOpen, setIsCartOpen, toast, addToCart, removeFromCart, updateQty, cartTotal, cartCount, showToast } = useCart();
 
+  // Rozwiązanie problemu FOUC (Flash of Unstyled Content):
   useEffect(() => {
+    const checkTailwind = () => {
+      // Sprawdzamy czy skrypt jest w nagłówku i czy obiekt tailwind jest gotowy
+      if (window.tailwind) {
+        setIsTailwindReady(true);
+      } else {
+        // Jeśli jeszcze nie, sprawdzamy ponownie za moment
+        const timeout = setTimeout(checkTailwind, 50);
+        return () => clearTimeout(timeout);
+      }
+    };
+    
+    // Dodatkowe zabezpieczenie: jeśli skrypt jakimś cudem nie został wstrzyknięty na górze
     if (!document.getElementById('tailwind-cdn')) {
       const script = document.createElement('script');
       script.id = 'tailwind-cdn';
       script.src = "https://cdn.tailwindcss.com";
+      script.onload = checkTailwind;
       document.head.appendChild(script);
+    } else {
+      checkTailwind();
     }
   }, []);
 
@@ -257,6 +280,25 @@ export default function App() {
     setIsMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+
+  // DOPÓKI TAILWIND NIE JEST GOTOWY, WYŚWIETLAMY CZYSTY EKRAN ŁADOWANIA
+  // Zapobiega to mignięciu niesformatowanego tekstu przed załadowaniem stylów.
+  if (!isTailwindReady) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh', 
+        fontFamily: 'sans-serif',
+        backgroundColor: '#ffffff'
+      }}>
+        <div style={{ color: '#10b981', fontWeight: 'bold', fontSize: '32px', letterSpacing: '-1px' }}>SPIDERRA</div>
+        <div style={{ marginTop: '12px', color: '#9ca3af', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '2px' }}>Ładowanie stylów...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#fcfcfd] min-h-screen text-gray-900 font-sans selection:bg-emerald-100">
@@ -316,10 +358,10 @@ export default function App() {
       {isCartOpen && (
         <div className="fixed inset-0 z-[100] flex justify-end">
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setIsCartOpen(false)}></div>
-          <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col p-8 animate-fade-in no-scrollbar">
+          <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col p-8 animate-fade-in no-scrollbar border-l border-gray-100">
             <div className="flex justify-between items-center mb-8 border-b pb-4">
               <h2 className="text-2xl font-black">Twój Koszyk</h2>
-              <button onClick={() => setIsCartOpen(false)} className="p-2 bg-gray-50 rounded-xl hover:bg-gray-100"><Icons.X/></button>
+              <button onClick={() => setIsCartOpen(false)} className="p-2 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"><Icons.X/></button>
             </div>
             <div className="flex-1 overflow-auto no-scrollbar">
               {cart.length === 0 ? (
