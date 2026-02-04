@@ -86,7 +86,6 @@ const useReveal = () => {
   const ref = useRef(null);
 
   useEffect(() => {
-    // Sprawdzenie czy przeglądarka obsługuje IntersectionObserver
     if (!('IntersectionObserver' in window)) {
         setIsVisible(true);
         return;
@@ -111,7 +110,7 @@ const useReveal = () => {
 const Reveal = memo(({ children, className = "", delay = 0 }) => {
   const [ref, isVisible] = useReveal();
   const transitionDelay = `${delay}ms`;
-  
+   
   return (
     <div 
       ref={ref} 
@@ -164,8 +163,88 @@ const Icons = {
   Loader: (p) => <IconBase {...p} className={`animate-spin ${p.className}`}><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></IconBase>
 };
 
-// --- DANE PRZYKŁADOWE (MOCK) ---
+// --- DANE PRODUKTÓW (Z MOCKOWYMI WARIANTAMI - WAŻNE!) ---
+// Uzupełniłem warianty zgodnie z Twoim zdjęciem z panelu Stripe
 const MOCK_PRODUCTS_DATA = [
+  { 
+    id: 'spider1', 
+    name: 'Grammostola rosea', 
+    latin: 'Grammostola rosea', 
+    type: 'spider', 
+    tags: ['terrestrial', 'beginner', 'bestseller'], 
+    price: 150.00, 
+    image: '/zdjecia/ptaszniki/grammostola_rosea.jpg', 
+    desc: 'Ptasznik z Chile, znany ze swojego spokojnego usposobienia i łatwości hodowli. Gatunek naziemny, idealny dla początkujących.' 
+  },
+  { 
+    id: 'spider2', 
+    name: 'Caribena versicolor', 
+    latin: 'Caribena versicolor', 
+    type: 'spider', 
+    tags: ['arboreal', 'beginner', 'bestseller'], 
+    price: 85.00, 
+    image: 'https://placehold.co/400x300/e2e8f0/10b981?text=Versicolor', 
+    desc: 'Jeden z najpiękniejszych ptaszników nadrzewnych. Dzięki łagodnemu usposobieniu nadaje się na pierwszego pająka nadrzewnego.' 
+  },
+  { 
+    id: 'spider3', 
+    name: 'Theraphosa stirmi', 
+    latin: 'Theraphosa stirmi', 
+    type: 'spider', 
+    tags: ['terrestrial', 'advanced', 'rare'], 
+    price: 450.00, 
+    image: 'https://placehold.co/400x300/e2e8f0/991b1b?text=Stirmi', 
+    desc: 'Jeden z największych pająków świata. Wymaga doświadczenia w utrzymaniu odpowiedniej wilgotności.' 
+  },
+  // --- ZESTAWY HODOWLANE Z WARIANTAMI ---
+  // WAŻNE: Podmień "price_PLACEHOLDER..." na swoje prawdziwe ID ze Stripe, jeśli nie korzystasz z backendu do pobierania produktów
+  { 
+    id: 'kit_s', 
+    name: 'Zestaw "Plecak" | Dla małych ptaszników', 
+    latin: 'Dla L1-L3', 
+    type: 'gear', 
+    tags: ['container', 'bestseller'], 
+    price: 11.99, 
+    image: 'https://placehold.co/400x300/f1f5f9/64748b?text=Zestaw+S', 
+    desc: 'Idealne pierwsze M1 dla Twojego malucha. Dostępny w trzech standardach podróży.',
+    variants: [
+      { id: 'eco', name: 'Economy', price: 11.99, desc: 'Pojemnik + Torf', stripeId: 'price_PLACEHOLDER_ECO_S' },
+      { id: 'biz', name: 'Business', price: 14.99, desc: 'Pojemnik + Torf + Kora', stripeId: 'price_PLACEHOLDER_BIZ_S' },
+      { id: 'first', name: 'First Class', price: 17.99, desc: 'Premium + Mech + Ozdoby', stripeId: 'price_PLACEHOLDER_FIRST_S' }
+    ]
+  },
+  { 
+    id: 'kit_m', 
+    name: 'Zestaw "Walizka podręczna" | Dla średnich ptaszników', 
+    latin: 'Dla L4-L7', 
+    type: 'gear', 
+    tags: ['container'], 
+    price: 39.99,
+    image: 'https://placehold.co/400x300/f1f5f9/a8a29e?text=Zestaw+M', 
+    desc: 'Wygodne lokum dla podrostków. Więcej miejsca na wylinki i tupanie.',
+    variants: [
+      { id: 'eco', name: 'Economy', price: 39.99, desc: 'Moczbox + Torf', stripeId: 'price_PLACEHOLDER_ECO_M' },
+      { id: 'biz', name: 'Business', price: 49.00, desc: 'Braplast + Tuba', stripeId: 'price_PLACEHOLDER_BIZ_M' },
+      { id: 'first', name: 'First Class', price: 65.00, desc: 'Braplast + Tuba + Wystrój + Miska', stripeId: 'price_PLACEHOLDER_FIRST_M' }
+    ]
+  },
+  { 
+    id: 'kit_l', 
+    name: 'Zestaw "Bagaż rejestrowany" | Dla dużych ptaszników', 
+    latin: 'Dla Dorosłych', 
+    type: 'gear', 
+    tags: ['container'], 
+    price: 72.99,
+    image: 'https://placehold.co/400x300/f1f5f9/78716c?text=Zestaw+L', 
+    desc: 'Kompletna willa dla dorosłego pająka. Stabilne warunki na lata.',
+    variants: [
+      { id: 'eco', name: 'Economy', price: 72.99, desc: 'Box + Torf', stripeId: 'price_PLACEHOLDER_ECO_L' },
+      { id: 'biz', name: 'Business', price: 89.00, desc: 'Duży Braplast + Duża Tuba', stripeId: 'price_PLACEHOLDER_BIZ_L' },
+      { id: 'first', name: 'First Class', price: 129.00, desc: 'Terrarium/Box + Ścianka + Full Opcja', stripeId: 'price_PLACEHOLDER_FIRST_L' }
+    ]
+  },
+  { id: 'gear2', name: 'Włókno kokosowe', latin: 'Substrat prasowany', type: 'gear', tags: ['substrate', 'bestseller'], price: 15.00, image: 'https://placehold.co/400x300/f1f5f9/a8a29e?text=Włókno', desc: 'Podstawowe podłoże do terrariów. Dobrze trzyma wilgoć, bezpieczne dla zwierząt.' },
+  { id: 'gear3', name: 'Pęseta długa', latin: '30 cm', type: 'gear', tags: ['tools'], price: 25.00, image: 'https://placehold.co/400x300/e2e8f0/64748b?text=Pęseta', desc: 'Niezbędne narzędzie do karmienia i sprzątania w terrarium. Stal nierdzewna.' },
 ];
 
 const useCart = () => {
@@ -188,7 +267,7 @@ const useCart = () => {
   }, [showToast]);
 
   const removeFromCart = useCallback((id) => setCart(prev => prev.filter(item => item.id !== id)), []);
-  
+   
   const updateQty = useCallback((id, delta) => {
     setCart(prev => prev.map(item => (item.id === id && item.qty + delta > 0) ? { ...item, qty: item.qty + delta } : item));
   }, []);
@@ -248,9 +327,8 @@ const SuccessView = memo(({ lastOrder }) => {
 // --- KOMPONENT: Bestseller Slider ---
 const BestsellerSlider = memo(({ products, onProductClick, addToCart }) => {
   const scrollRef = useRef(null);
-  
+   
   const bestsellers = useMemo(() => {
-    // Filtrowanie (zabezpieczenie przed undefined/null)
     const tagged = products.filter(p => p.tags && Array.isArray(p.tags) && p.tags.includes('bestseller'));
     return tagged.length > 0 ? tagged : products.slice(0, 5); 
   }, [products]);
@@ -274,7 +352,7 @@ const BestsellerSlider = memo(({ products, onProductClick, addToCart }) => {
           <button onClick={() => scroll('right')} className="p-2 rounded-full border border-[#e7e5e4] text-[#78716c] hover:bg-[#f5f5f4] hover:text-[#44403c] transition-colors"><Icons.ChevronRight className="w-5 h-5"/></button>
         </div>
       </div>
-      
+       
       <div 
         ref={scrollRef}
         className="flex gap-6 overflow-x-auto pb-8 snap-x scroll-smooth no-scrollbar"
@@ -287,7 +365,7 @@ const BestsellerSlider = memo(({ products, onProductClick, addToCart }) => {
             onClick={() => onProductClick(product)}
           >
             <div className="h-48 overflow-hidden rounded-t-2xl bg-[#fafaf9] relative">
-              <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-700" />
+              <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute top-3 left-3 bg-[#5c6b50] text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider shadow-sm">
                 Top
               </div>
@@ -374,8 +452,39 @@ const TravelGallery = memo(({ navigateTo }) => {
   );
 });
 
-// --- Produkt Details (z Cross-Selling) ---
+// --- Produkt Details (z POPRAWNĄ Obsługą Wariantów) ---
 const ProductDetailsView = memo(({ product, onBack, onAddToCart, allProducts }) => {
+  // Stan dla wybranego wariantu (domyślnie pierwszy, jeśli istnieją warianty)
+  const [selectedVariant, setSelectedVariant] = useState(
+    (product.variants && product.variants.length > 0) ? product.variants[0] : null
+  );
+
+  // Resetujemy wybór przy zmianie produktu
+  useEffect(() => {
+    if(product.variants && product.variants.length > 0) {
+        setSelectedVariant(product.variants[0]);
+    } else {
+        setSelectedVariant(null);
+    }
+  }, [product]);
+
+  const handleAddToCart = () => {
+    if (selectedVariant) {
+      // Tworzymy unikalny produkt wariantowy
+      const variantProduct = {
+        ...product,
+        id: `${product.id}-${selectedVariant.id}`, 
+        name: `${product.name} (${selectedVariant.name})`,
+        price: selectedVariant.price,
+        stripeId: selectedVariant.stripeId, 
+        originalId: product.id 
+      };
+      onAddToCart(variantProduct);
+    } else {
+      onAddToCart(product);
+    }
+  };
+
   const relatedProducts = useMemo(() => {
     if (!allProducts) return [];
     if (product.type === 'spider') {
@@ -384,6 +493,8 @@ const ProductDetailsView = memo(({ product, onBack, onAddToCart, allProducts }) 
       return allProducts.filter(p => p.id !== product.id).sort(() => 0.5 - Math.random()).slice(0, 3);
     }
   }, [product, allProducts]);
+
+  const currentPrice = selectedVariant ? selectedVariant.price : product.price;
 
   return (
     <div className="animate-fade-in space-y-12">
@@ -401,23 +512,55 @@ const ProductDetailsView = memo(({ product, onBack, onAddToCart, allProducts }) 
             <div>
               <p className="text-[#5c6b50] font-bold uppercase tracking-widest text-xs mb-2">{product.latin}</p>
               <h2 className="text-4xl font-bold text-[#44403c] mb-4 leading-tight">{product.name}</h2>
-              <p className="text-2xl font-semibold text-[#57534e] mb-6">{product.price.toFixed(2)} PLN</p>
-              
+              <p className="text-2xl font-semibold text-[#57534e] mb-6 animate-fade-in" key={currentPrice}>
+                {currentPrice.toFixed(2)} PLN
+              </p>
+               
               <div className="prose prose-stone text-[#78716c] mb-8 leading-relaxed">
                 <p>{product.desc || "Brak szczegółowego opisu dla tego produktu."}</p>
-                <div className="mt-6 flex flex-col gap-2 text-sm">
-                   <p><span className="font-semibold text-[#44403c]">Dostępność:</span> W magazynie</p>
-                   <p><span className="font-semibold text-[#44403c]">Wysyłka:</span> 24h (Dni robocze)</p>
+              </div>
+
+              {/* SEKCJA WYBORU WARIANTU */}
+              {product.variants && product.variants.length > 0 && (
+                <div className="mb-8 p-4 bg-[#fafaf9] rounded-2xl border border-[#e7e5e4]">
+                  <p className="text-xs font-bold uppercase tracking-widest text-[#a8a29e] mb-3">Wybierz wersję:</p>
+                  <div className="space-y-3">
+                    {product.variants.map((variant) => (
+                      <div 
+                        key={variant.id}
+                        onClick={() => setSelectedVariant(variant)}
+                        className={`flex justify-between items-center p-4 rounded-xl cursor-pointer border-2 transition-all ${
+                          selectedVariant && selectedVariant.id === variant.id 
+                            ? 'border-[#5c6b50] bg-white shadow-md' 
+                            : 'border-transparent bg-white hover:border-[#e7e5e4]'
+                        }`}
+                      >
+                        <div>
+                          <p className={`font-bold text-sm ${selectedVariant && selectedVariant.id === variant.id ? 'text-[#5c6b50]' : 'text-[#44403c]'}`}>
+                            {variant.name}
+                          </p>
+                          <p className="text-xs text-[#78716c]">{variant.desc}</p>
+                        </div>
+                        <span className="font-bold text-[#44403c]">{variant.price.toFixed(2)} zł</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              )}
+
+              <div className="mt-6 flex flex-col gap-2 text-sm text-[#78716c]">
+                 <p><span className="font-semibold text-[#44403c]">Dostępność:</span> W magazynie</p>
+                 <p><span className="font-semibold text-[#44403c]">Wysyłka:</span> 24h (Dni robocze)</p>
               </div>
             </div>
-            
+             
             <div className="mt-auto pt-8 border-t border-[#e5e5e0]">
               <button 
-                onClick={() => onAddToCart(product)} 
+                onClick={handleAddToCart} 
                 className="w-full py-4 bg-[#57534e] text-white rounded-xl font-bold text-lg hover:bg-[#44403c] transition-all shadow-md flex items-center justify-center gap-3 active:scale-[0.98]"
               >
-                <Icons.Plus className="w-6 h-6" /> Dodaj do koszyka
+                <Icons.Plus className="w-6 h-6" /> 
+                {product.variants ? `Dodaj wariant ${selectedVariant ? selectedVariant.name : ''}` : 'Dodaj do koszyka'}
               </button>
             </div>
           </div>
@@ -543,7 +686,7 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
                 const selectedInGroup = group.tags
                   .map(t => t.id)
                   .filter(id => selectedTags.includes(id));
-                
+                 
                 if (selectedInGroup.length === 0) return true;
                 // Bezpieczne sprawdzanie: p.tags musi być tablicą
                 return p.tags && Array.isArray(p.tags) && selectedInGroup.some(tag => p.tags.includes(tag));
@@ -583,7 +726,7 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
 
   return (
     <div className="animate-fade-in">
-      
+       
       {/* --- SUWAK I FILTRY CSS --- */}
       <style>{`
         .range-slider-container { position: relative; width: 100%; height: 24px; }
@@ -629,32 +772,32 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
             <div className="flex flex-col sm:flex-row gap-8 w-full lg:w-auto items-center">
               <div className="flex flex-col gap-2 min-w-[240px] w-full sm:w-auto">
                 <div className="flex justify-between text-xs text-[#78716c] font-medium font-mono">
-                   <span>{minPrice} zł</span>
-                   <span>{maxPrice} zł</span>
+                    <span>{minPrice} zł</span>
+                    <span>{maxPrice} zł</span>
                 </div>
                 <div className="range-slider-container">
-                   <div className="range-track"></div>
-                   <div 
+                    <div className="range-track"></div>
+                    <div 
                       className="range-track-active"
                       style={{
                           left: `${(minPrice / productsMaxPrice) * 100}%`,
                           width: `${((maxPrice - minPrice) / productsMaxPrice) * 100}%`
                       }}
-                   ></div>
-                   <div className="range-thumb" style={{ left: `${(minPrice / productsMaxPrice) * 100}%` }}></div>
-                   <div className="range-thumb" style={{ left: `${(maxPrice / productsMaxPrice) * 100}%` }}></div>
-                   <input 
+                    ></div>
+                    <div className="range-thumb" style={{ left: `${(minPrice / productsMaxPrice) * 100}%` }}></div>
+                    <div className="range-thumb" style={{ left: `${(maxPrice / productsMaxPrice) * 100}%` }}></div>
+                    <input 
                       type="range" min="0" max={productsMaxPrice} step="1"
                       value={minPrice} 
                       onChange={(e) => { const val = Math.min(Number(e.target.value), maxPrice - 10); setMinPrice(val); }}
                       className="range-slider-input"
-                   />
-                   <input 
+                    />
+                    <input 
                       type="range" min="0" max={productsMaxPrice} step="1"
                       value={maxPrice} 
                       onChange={(e) => { const val = Math.max(Number(e.target.value), minPrice + 10); setMaxPrice(val); }}
                       className="range-slider-input"
-                   />
+                    />
                 </div>
               </div>
 
@@ -676,24 +819,24 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
           </div>
 
           {currentFilterGroups.length > 0 && (
-             <div className="pt-6 border-t border-[#e5e5e0] grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
-               {currentFilterGroups.map((group, idx) => (
-                 <div key={idx} className="flex flex-col gap-2">
-                   <h4 className="text-xs font-bold uppercase tracking-widest text-[#a8a29e] mb-1">{group.label}</h4>
-                   <div className="flex flex-wrap gap-2">
-                     {group.tags.map(tag => (
-                       <button 
-                         key={tag.id} 
-                         onClick={() => toggleTag(tag.id)}
-                         className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all border ${selectedTags.includes(tag.id) ? 'bg-[#5c6b50] text-white border-[#5c6b50] shadow-sm' : 'bg-[#f5f5f4] text-[#78716c] border-[#e7e5e4] hover:bg-[#e7e5e4] hover:text-[#44403c]'}`}
-                       >
-                         {tag.label}
-                       </button>
-                     ))}
-                   </div>
-                 </div>
-               ))}
-             </div>
+              <div className="pt-6 border-t border-[#e5e5e0] grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
+                {currentFilterGroups.map((group, idx) => (
+                  <div key={idx} className="flex flex-col gap-2">
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-[#a8a29e] mb-1">{group.label}</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {group.tags.map(tag => (
+                        <button 
+                          key={tag.id} 
+                          onClick={() => toggleTag(tag.id)}
+                          className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all border ${selectedTags.includes(tag.id) ? 'bg-[#5c6b50] text-white border-[#5c6b50] shadow-sm' : 'bg-[#f5f5f4] text-[#78716c] border-[#e7e5e4] hover:bg-[#e7e5e4] hover:text-[#44403c]'}`}
+                        >
+                          {tag.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
           )}
         </div>
       </div>
@@ -742,16 +885,16 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
             </button>
 
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                 <button
+                  <button
                     key={page}
                     onClick={() => {
                         setCurrentPage(page);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                     className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${currentPage === page ? 'bg-[#57534e] text-white shadow-md' : 'bg-white border border-[#e7e5e4] text-[#78716c] hover:bg-[#f5f5f4] hover:text-[#44403c]'}`}
-                 >
+                  >
                     {page}
-                 </button>
+                  </button>
             ))}
 
             <button
@@ -786,7 +929,7 @@ const AboutView = memo(() => (
               <p>Witaj w Spiderra! Moja przygoda z ptasznikami zaczęła się w 2020 roku od małej Chromki. Dziś to pasja, którą dzielę się z Wami, oferując ptaszniki z różnych regionów świata oraz transmitując to jak żyją w naturze.</p>
               <p>Każdy pająk który jest w mojej ofercie jest wybrany tak aby zarówno początkujący jak i zaawansowany hodowca znalazł coś dla siebie. Dbam o to, abyś mógł/mogła cieszyć się swoim małym zwierzakiem.</p>
           </div>
-          
+           
           <div className="mt-8 p-6 bg-[#f0f0eb] rounded-2xl border border-[#e6e5d8] relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
               <Icons.Bug className="w-24 h-24 text-[#5c6b50]" />
@@ -827,7 +970,7 @@ const StreamView = memo(() => (
               <h2 className="text-white text-xl font-bold tracking-wide uppercase">Spiderra Live</h2>
             </div>
           </div>
-          
+           
           <div className="aspect-video bg-black rounded-2xl relative flex items-center justify-center border border-[#44403c] group cursor-pointer overflow-hidden">
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1548858881-80590a5525bc?auto=format&fit=crop&w=1200&q=40')] bg-cover bg-center opacity-30 blur-sm group-hover:scale-105 transition-transform duration-700"></div>
             <div className="relative z-10 text-center">
@@ -837,7 +980,7 @@ const StreamView = memo(() => (
                <p className="text-[#a8a29e] text-xs font-medium mt-2 tracking-widest uppercase">Łączenie z kamerą...</p>
             </div>
           </div>
-          
+           
           <div className="mt-8 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-[#44403c] p-0.5 border border-[#57534e]">
@@ -867,14 +1010,14 @@ const ShippingReturnsView = memo(() => (
       <div className="p-3 bg-[#f5f5f0] rounded-xl text-[#5c6b50]"><Icons.Truck className="w-6 h-6" /></div>
       <h2 className="text-2xl font-bold text-[#44403c]">Wysyłka i Zwroty</h2>
     </div>
-    
+     
     <div className="prose prose-stone max-w-none text-[#78716c] leading-relaxed space-y-10 text-sm font-light">
-      
+       
       {/* Sekcja Wysyłki */}
       <section className="space-y-4">
         <h3 className="font-bold text-[#44403c] text-lg mb-2 border-b border-[#f5f5f4] pb-2">Metody i Koszty Dostawy</h3>
         <p>Dbamy o to, aby Twoje zamówienie dotarło do Ciebie bezpiecznie i szybko. Oferujemy następujące opcje dostawy na terenie Polski:</p>
-        
+         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div className="bg-[#fafaf9] p-4 rounded-xl border border-[#e7e5e4] flex items-start gap-4">
                 <div className="p-2 bg-white rounded-lg border border-[#e7e5e4] text-[#5c6b50]"><Icons.Box className="w-5 h-5"/></div>
@@ -952,7 +1095,7 @@ const TermsView = memo(() => (
         </ul>
         <p className="mt-2">Niniejszy Regulamin jest nieprzerwanie dostępny w witrynie internetowej, w sposób umożliwiający jego pozyskanie, odtwarzanie i utrwalanie jego treści poprzez wydrukowanie lub zapisanie na nośniku w każdej chwili.</p>
       </section>
-      
+       
       <section>
         <h3 className="font-bold text-[#44403c] text-base mb-3">II. Definicje</h3>
         <ul className="list-disc pl-5 mt-1 space-y-1 marker:text-[#5c6b50]">
@@ -1045,7 +1188,7 @@ export default function App() {
   const [isTailwindReady, setIsTailwindReady] = useState(false);
   const [lastOrder, setLastOrder] = useState(null); 
   const [selectedProduct, setSelectedProduct] = useState(null);
-  
+   
   const { cart, setCart, isCartOpen, setIsCartOpen, toast, addToCart, removeFromCart, updateQty, cartTotal, cartCount, showToast } = useCart();
 
   useEffect(() => {
@@ -1074,7 +1217,7 @@ export default function App() {
         return () => clearTimeout(timeout);
       }
     };
-    
+     
     if (!document.getElementById('tailwind-cdn')) {
       const script = document.createElement('script');
       script.id = 'tailwind-cdn';
@@ -1093,7 +1236,7 @@ export default function App() {
         const res = await fetch(endpoint);
         if (!res.ok) throw new Error();
         let data = await res.json();
-        
+         
         // NORMALIZACJA DANYCH
         data = data.map(product => ({
             ...product,
@@ -1114,9 +1257,9 @@ export default function App() {
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
-    
+     
     localStorage.setItem('pendingCart', JSON.stringify(cart));
-    
+     
     setCheckoutLoading(true);
     try {
       const endpoint = `${API_URL}/create-checkout-session`;
@@ -1180,7 +1323,7 @@ export default function App() {
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
-      
+       
       {/* Nawigacja */}
       <nav className="fixed top-0 w-full bg-[#faf9f6]/90 backdrop-blur-md z-[80] border-b border-[#e7e5e4] h-20 flex items-center shadow-sm">
         <div className="max-w-7xl mx-auto w-full px-6 flex justify-between items-center">
@@ -1233,7 +1376,7 @@ export default function App() {
         {activeView === 'privacy' && <PrivacyView />}
         {activeView === 'shipping' && <ShippingReturnsView />}
         {activeView === 'success' && <SuccessView lastOrder={lastOrder} />}
-        
+         
         {/* Logika dla widoku sklepu i szczegółów produktu */}
         {activeView === 'shop' && (
           selectedProduct ? (
@@ -1349,7 +1492,7 @@ export default function App() {
               </div>
             </div>
           </div>
-          
+           
           <div className="pt-8 border-t border-[#e7e5e4] flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold text-[#d6d3d1] tracking-widest uppercase">
             <p>&copy; {new Date().getFullYear()} Spiderra ©. Wszystkie prawa zastrzeżone.</p>
           </div>
