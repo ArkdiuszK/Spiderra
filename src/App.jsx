@@ -43,7 +43,8 @@ const PRODUCT_CATEGORIES = [
           { id: 'arboreal', label: 'Nadrzewne' },
           { id: 'fossorial', label: 'Podziemne' },
           { id: 'dwarf', label: 'Karłowate' },
-          { id: 'rare', label: 'Rzadkie' }
+          { id: 'rare', label: 'Rzadkie' },
+          { id: 'bestseller', label: 'Bestsellery' }
         ]
       }
     ]
@@ -68,12 +69,16 @@ const PRODUCT_CATEGORIES = [
 ];
 
 // --- PRZYŚPIESZONE ŁADOWANIE TAILWINDA ---
-if (typeof document !== 'undefined' && !document.getElementById('tailwind-cdn')) {
-  const script = document.createElement('script');
-  script.id = 'tailwind-cdn';
-  script.src = "https://cdn.tailwindcss.com";
-  document.head.appendChild(script);
-}
+const injectTailwind = () => {
+  if (typeof document !== 'undefined' && !document.getElementById('tailwind-cdn')) {
+    const script = document.createElement('script');
+    script.id = 'tailwind-cdn';
+    script.src = "https://cdn.tailwindcss.com";
+    script.async = true;
+    document.head.appendChild(script);
+  }
+};
+injectTailwind();
 
 // --- CUSTOM HOOK: REVEAL ON SCROLL ---
 const useReveal = () => {
@@ -81,6 +86,12 @@ const useReveal = () => {
   const ref = useRef(null);
 
   useEffect(() => {
+    // Sprawdzenie czy przeglądarka obsługuje IntersectionObserver
+    if (!('IntersectionObserver' in window)) {
+        setIsVisible(true);
+        return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -91,26 +102,26 @@ const useReveal = () => {
       { threshold: 0.1 }
     );
     if (ref.current) observer.observe(ref.current);
-    return () => { if (ref.current) observer.unobserve(ref.current); };
+    return () => observer.disconnect();
   }, []);
 
   return [ref, isVisible];
 };
 
-const Reveal = ({ children, className = "", delay = 0 }) => {
+const Reveal = memo(({ children, className = "", delay = 0 }) => {
   const [ref, isVisible] = useReveal();
   const transitionDelay = `${delay}ms`;
   
   return (
     <div 
       ref={ref} 
-      className={`transition-all duration-1000 ease-out transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'} ${className}`}
+      className={`transition-all duration-700 ease-out transform will-change-transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} ${className}`}
       style={{ transitionDelay }}
     >
       {children}
     </div>
   );
-};
+});
 
 // --- IKONY ---
 const IconBase = ({ children, className, ...props }) => (
@@ -132,12 +143,14 @@ const Icons = {
   FileText: (p) => <IconBase {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></IconBase>,
   Lock: (p) => <IconBase {...p}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></IconBase>,
   ArrowLeft: (p) => <IconBase {...p}><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></IconBase>,
+  ArrowRight: (p) => <IconBase {...p}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></IconBase>,
   ChevronLeft: (p) => <IconBase {...p}><polyline points="15 18 9 12 15 6" /></IconBase>,
   ChevronRight: (p) => <IconBase {...p}><polyline points="9 18 15 12 9 6" /></IconBase>,
   Filter: (p) => <IconBase {...p}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></IconBase>,
   MessageCircle: (p) => <IconBase {...p}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></IconBase>,
+  Truck: (p) => <IconBase {...p}><rect width="16" height="13" x="2" y="5" rx="2" /><path d="M2 9h13a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z" /><path d="M5 9V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4" /><circle cx="7" cy="15" r="2" /><circle cx="17" cy="15" r="2" /></IconBase>,
+  Box: (p) => <IconBase {...p}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.29 7 12 12 20.71 7" /><line x1="12" y1="22" x2="12" y2="12" /></IconBase>,
   Camera: (p) => <IconBase {...p}><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></IconBase>,
-  ArrowRight: (p) => <IconBase {...p}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></IconBase>,
   Kick: (p) => (
     <svg viewBox="0 0 24 24" fill="currentColor" className={p.className} width="24" height="24">
       <path d="M12.9 16.7l-4.2-4.2 4.2-4.2h-3.8L5.9 11.6v-3.3H2.5v7.5h3.4v-3.3l3.2 3.3h3.8zM16.5 7.4h-3.4v9.3h3.4V7.4zM21.5 7.4h-3.4v9.3h3.4V7.4z"/>
@@ -239,11 +252,12 @@ const SuccessView = memo(({ lastOrder }) => {
 });
 
 // --- KOMPONENT: Bestseller Slider ---
-const BestsellerSlider = memo(({ products, onProductClick }) => {
+const BestsellerSlider = memo(({ products, onProductClick, addToCart }) => {
   const scrollRef = useRef(null);
   
   const bestsellers = useMemo(() => {
-    const tagged = products.filter(p => p.tags && p.tags.includes('bestseller'));
+    // Filtrowanie (zabezpieczenie przed undefined/null)
+    const tagged = products.filter(p => p.tags && Array.isArray(p.tags) && p.tags.includes('bestseller'));
     return tagged.length > 0 ? tagged : products.slice(0, 5); 
   }, [products]);
 
@@ -289,9 +303,15 @@ const BestsellerSlider = memo(({ products, onProductClick }) => {
               <h4 className="font-bold text-lg text-[#44403c] mb-2 line-clamp-1">{product.name}</h4>
               <div className="flex items-center justify-between mt-4">
                 <span className="text-xl font-bold text-[#44403c]">{product.price.toFixed(2)} zł</span>
-                <div className="w-8 h-8 rounded-full bg-[#f5f5f4] flex items-center justify-center text-[#44403c] group-hover/card:bg-[#57534e] group-hover/card:text-white transition-colors">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); 
+                    addToCart(product);
+                  }}
+                  className="w-8 h-8 rounded-full bg-[#f5f5f4] flex items-center justify-center text-[#44403c] group-hover/card:bg-[#57534e] group-hover/card:text-white transition-colors"
+                >
                   <Icons.Plus className="w-5 h-5" />
-                </div>
+                </button>
               </div>
             </div>
           </div>
@@ -305,9 +325,9 @@ const BestsellerSlider = memo(({ products, onProductClick }) => {
 const TravelGallery = memo(({ navigateTo }) => {
   const photos = [
     { id: 1, src: "/zdjecia/cypr.jpg", location: "Cypr", desc: "Tarantula w naturze" },
-    { id: 2, src: "/zdjecia/maroko.jpg", location: "Maroko", desc: "Marrakesz" },
-    { id: 3, src: "/zdjecia/madera.jpg", location: "Madera", desc: "Jardim Botânico da Madeira" },
-    { id: 4, src: "/zdjecia/hiszpania.JPG", location: "Hiszpania", desc: "Barcelona" },
+    { id: 2, src: "/zdjecia/madera.jpg", location: "Madera", desc: "Madera" },
+    { id: 3, src: "/zdjecia/hiszpania.JPG", location: "Hiszpania", desc: "Barcelona" },
+    { id: 4, src: "/zdjecia/maroko.jpg", location: "Maroko", desc: "Marrakesz" },
   ];
 
   const displayPhotos = photos.slice(0, 4);
@@ -322,8 +342,8 @@ const TravelGallery = memo(({ navigateTo }) => {
           </div>
           <h3 className="text-3xl md:text-4xl font-bold text-[#44403c]">Z Dziennika Podróży</h3>
         </div>
-        <p className="text-[#78716c] text-sm max-w-md text-right md:text-left font-normal leading-relaxed">
-          A oto miejsca, które odwiedziłem...
+        <p className="text-[#78716c] text-sm max-w-md text-right md:text-left font-light leading-relaxed">
+          Nie jestem tylko sprzedawcą – jestem badaczem. Zobacz, jak wyglądają naturalne siedliska pająków, które oferuję.
         </p>
       </div>
 
@@ -434,148 +454,6 @@ const ProductDetailsView = memo(({ product, onBack, onAddToCart, allProducts }) 
   );
 });
 
-// --- AboutView ---
-const AboutView = memo(() => (
-  <div className="bg-white rounded-3xl border border-[#e5e5e0] p-8 md:p-16 animate-fade-in shadow-sm">
-    <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-12 items-center">
-      <div className="w-full md:w-1/2">
-        <Reveal className="rounded-3xl overflow-hidden shadow-lg border border-[#e7e5e4]">
-            <img src="/zdjecia/arek.png" alt="Arkadiusz Kołacki" className="w-full aspect-square object-cover" />
-        </Reveal>
-      </div>
-      <div className="w-full md:w-1/2">
-        <Reveal delay={200}>
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-[#44403c]">Cześć, jestem <span className="text-[#5c6b50]">Arek</span></h2>
-          <div className="space-y-4 text-[#78716c] leading-relaxed font-light">
-              <p>Witaj w Spiderra! Moja przygoda z ptasznikami zaczęła się w 2020 roku od małej Chromki. Dziś to pasja, którą dzielę się z Wami, oferując ptaszniki z różnych regionów świata oraz transmitując to jak żyją w naturze.</p>
-              <p>Każdy pająk który jest w mojej ofercie jest wybrany tak aby zarówno początkujący jak i zaawansowany hodowca znalazł coś dla siebie. Dbam o to, abyś mógł/mogła cieszyć się swoim małym zwierzakiem.</p>
-          </div>
-          
-          <div className="mt-8 p-6 bg-[#f0f0eb] rounded-2xl border border-[#e6e5d8] relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <Icons.Bug className="w-24 h-24 text-[#5c6b50]" />
-            </div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-2 text-[#5c6b50]">
-                <Icons.MessageCircle className="w-6 h-6" />
-                <h3 className="font-bold text-lg">Potrzebujesz porady?</h3>
-              </div>
-              <p className="text-sm text-[#78716c] mb-4">
-                Dopiero zaczynasz i nie wiesz, jakiego pająka wybrać na start? Napisz do mnie – chętnie doradzę gatunek idealnie dopasowany do Twoich preferencji i warunków!
-              </p>
-              <a href={`mailto:${COMPANY_DATA.email}`} className="inline-flex items-center text-sm font-bold text-[#5c6b50] hover:text-[#4a5740] transition-colors border-b border-[#5c6b50] pb-0.5">
-                Napisz do mnie &rarr;
-              </a>
-            </div>
-          </div>
-
-          <div className="flex gap-8 pt-8 mt-4 border-t border-[#e5e5e0]">
-            <div><p className="text-3xl font-bold text-[#44403c]">20+</p><p className="text-xs text-[#a8a29e] uppercase font-bold tracking-widest mt-1">Gatunków</p></div>
-            <div><p className="text-3xl font-bold text-[#44403c]">100%</p><p className="text-xs text-[#a8a29e] uppercase font-bold tracking-widest mt-1">Wsparcia</p></div>
-          </div>
-        </Reveal>
-      </div>
-    </div>
-  </div>
-));
-
-// --- StreamView ---
-const StreamView = memo(() => (
-  <div className="animate-fade-in">
-    <div className="bg-[#292524] rounded-[2rem] overflow-hidden shadow-2xl border border-[#1c1917] max-w-5xl mx-auto text-[#d6d3d1]">
-      <div className="p-6 md:p-10 flex flex-col gap-8">
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></div>
-              <h2 className="text-white text-xl font-bold tracking-wide uppercase">Spiderra Live</h2>
-            </div>
-            <div className="flex items-center gap-2 bg-[#44403c] px-3 py-1 rounded-full border border-[#57534e]">
-              <span className="text-xs font-bold text-[#a8a29e] uppercase tracking-widest">Aktualnie online</span>
-            </div>
-          </div>
-          
-          <div className="aspect-video bg-black rounded-2xl relative flex items-center justify-center border border-[#44403c] group cursor-pointer overflow-hidden">
-            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1548858881-80590a5525bc?auto=format&fit=crop&w=1200&q=40')] bg-cover bg-center opacity-30 blur-sm group-hover:scale-105 transition-transform duration-700"></div>
-            <div className="relative z-10 text-center">
-               <div className="w-16 h-16 bg-[#5c6b50]/80 text-[#f5f5f0] rounded-full flex items-center justify-center shadow-lg mb-4 mx-auto backdrop-blur-sm border border-[#4a5740]">
-                  <Icons.Video className="w-8 h-8 fill-current ml-0.5" />
-               </div>
-               <p className="text-white font-bold text-lg tracking-tight uppercase">Ekspedycja: Lasy Deszczowe</p>
-               <p className="text-[#a8a29e] text-xs font-medium mt-2 tracking-widest uppercase">Łączenie z kamerą...</p>
-            </div>
-          </div>
-          
-          <div className="mt-8 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-[#44403c] p-0.5 border border-[#57534e]">
-                <div className="w-full h-full rounded-[0.5rem] flex items-center justify-center overflow-hidden">
-                   <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain opacity-80" />
-                </div>
-              </div>
-              <div>
-                <p className="text-white font-medium text-sm">Następna transmisja...</p>
-                <p className="text-[#a8a29e] text-xs">Jordania 08/02</p>
-              </div>
-            </div>
-            <a href="https://kick.com/spiderra" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-[#44403c] text-[#e7e5e4] border border-[#57534e] px-6 py-3 rounded-xl font-bold text-xs hover:bg-[#57534e] transition-colors uppercase tracking-wider">
-               <Icons.Kick className="w-4 h-4" /> Obserwuj na Kick
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-));
-
-// --- TermsView ---
-const TermsView = memo(() => (
-  <div className="bg-white rounded-3xl border border-[#e5e5e0] p-8 md:p-16 animate-fade-in shadow-sm max-w-4xl mx-auto">
-    <div className="flex items-center gap-4 mb-8 border-b border-[#e5e5e0] pb-6">
-      <div className="p-3 bg-[#f5f5f0] rounded-xl text-[#5c6b50]"><Icons.FileText className="w-6 h-6" /></div>
-      <h2 className="text-2xl font-bold text-[#44403c]">Regulamin Sklepu</h2>
-    </div>
-    <div className="prose prose-stone max-w-none text-[#78716c] leading-relaxed space-y-8 text-sm font-light">
-      <section>
-        <h3 className="font-bold text-[#44403c] text-base mb-3">I. Postanowienia ogólne</h3>
-        <p>Niniejszy Regulamin określa ogólne warunki, sposób świadczenia Usług drogą elektroniczną i sprzedaży prowadzonej za pośrednictwem Sklepu Internetowego www.spiderra.netlify.app. Sklep prowadzi {COMPANY_DATA.name}, wpisany do rejestru przedsiębiorców Centralnej Ewidencji i Informacji o Działalności Gospodarczej prowadzonej przez ministra właściwego ds. gospodarki pod adresem {COMPANY_DATA.address}, {COMPANY_DATA.zip} {COMPANY_DATA.city}, NIP {COMPANY_DATA.nip}, REGON {COMPANY_DATA.regon}, zwany dalej Sprzedawcą.</p>
-        <p className="mt-2">Kontakt ze Sprzedawcą odbywa się poprzez:</p>
-        <ul className="list-disc pl-5 mt-1 space-y-1 marker:text-[#5c6b50]">
-          <li>adres poczty elektronicznej: {COMPANY_DATA.email};</li>
-          <li>pod numerem telefonu: {COMPANY_DATA.phone};</li>
-          <li>formularz kontaktowy dostępny na stronach Sklepu Internetowego.</li>
-        </ul>
-        <p className="mt-2">Niniejszy Regulamin jest nieprzerwanie dostępny w witrynie internetowej, w sposób umożliwiający jego pozyskanie, odtwarzanie i utrwalanie jego treści poprzez wydrukowanie lub zapisanie na nośniku w każdej chwili.</p>
-        <p className="mt-2">Sprzedawca informuje, że korzystanie z Usług świadczonych drogą elektroniczną może wiązać się z zagrożeniem po stronie każdego użytkownika sieci Internet, polegającym na możliwości wprowadzenia do systemu teleinformatycznego Klienta szkodliwego oprogramowania oraz pozyskania i modyfikacji jego danych przez osoby nieuprawnione. By uniknąć ryzyka wystąpienia zagrożeń w/w Klient powinien stosować właściwe środki techniczne, które zminimalizują ich wystąpienie, a w szczególności programy antywirusowe i zaporę sieciową typu firewall.</p>
-      </section>
-      <section>
-        <h3 className="font-bold text-[#44403c] text-base mb-3">XIV. Postanowienia końcowe</h3>
-        <p>Wszelkie prawa do Sklepu Internetowego, w tym majątkowe prawa autorskie, prawa własności intelektualnej do jego nazwy, domeny internetowej, strony internetowej Sklepu Internetowego, a także do formularzy, logotypów należą do Sprzedawcy.</p>
-        <p>W sprawach nieuregulowanych w niniejszym Regulaminie mają zastosowanie przepisy Kodeksu Cywilnego, przepisy Ustawy o świadczeniu usług drogą elektroniczną, przepisy Ustawy o prawach Konsumenta oraz inne właściwe przepisy prawa polskiego.</p>
-      </section>
-    </div>
-  </div>
-));
-
-// --- PrivacyView ---
-const PrivacyView = memo(() => (
-  <div className="bg-white rounded-3xl border border-[#e5e5e0] p-8 md:p-16 animate-fade-in shadow-sm max-w-4xl mx-auto">
-    <div className="flex items-center gap-4 mb-8 border-b border-[#e5e5e0] pb-6">
-      <div className="p-3 bg-[#f5f5f0] rounded-xl text-[#5c6b50]"><Icons.Lock className="w-6 h-6" /></div>
-      <h2 className="text-2xl font-bold text-[#44403c]">Polityka Prywatności</h2>
-    </div>
-    <div className="prose prose-stone max-w-none text-[#78716c] leading-relaxed space-y-8 text-sm font-light">
-      <section>
-        <h3 className="font-bold text-[#44403c] text-base mb-3">CZYM JEST POLITYKA PRYWATNOŚCI?</h3>
-        <p>Chcielibyśmy zapoznać Cię ze szczegółami przetwarzania przez nas Twoich danych osobowych, aby dać Ci pełną wiedzę i komfort w korzystaniu z naszej strony internetowej.</p>
-        <p className="mt-2">W związku z tym, że sami działamy w branży internetowej, wiemy jak ważna jest ochrona Twoich danych osobowych. Dlatego dokładamy szczególnych starań, aby chronić Twoją prywatność i informacje, które nam przekazujesz.</p>
-        <p className="mt-4 font-bold text-[#44403c]">Kto jest administratorem strony internetowej?</p>
-        <p>Administratorem strony internetowej jest {COMPANY_DATA.name}, wpisany do rejestru przedsiębiorców Centralnej Ewidencji i Informacji o Działalności Gospodarczej prowadzonej przez ministra właściwego ds. gospodarki pod adresem {COMPANY_DATA.address}, {COMPANY_DATA.zip} {COMPANY_DATA.city}, NIP {COMPANY_DATA.nip}, REGON {COMPANY_DATA.regon} (czyli: my).</p>
-      </section>
-    </div>
-  </div>
-));
-
 // --- HOME VIEW ---
 const HomeView = memo(({ navigateTo, products, onProductClick, addToCart }) => (
   <div className="animate-fade-in space-y-16 pb-12">
@@ -583,7 +461,7 @@ const HomeView = memo(({ navigateTo, products, onProductClick, addToCart }) => (
       {HERO_IMAGE_URL ? (
         <>
           <img src={HERO_IMAGE_URL} alt="Background" className="absolute inset-0 w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-[#faf9f6]/70 backdrop-blur-s"></div>
+          <div className="absolute inset-0 bg-[#faf9f6]/50 backdrop-blur-s"></div>
         </>
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-[#f5f5f4] via-[#faf9f6] to-[#e6e5d8]/30"></div>
@@ -594,10 +472,10 @@ const HomeView = memo(({ navigateTo, products, onProductClick, addToCart }) => (
           Nowości już dostępne!
         </div>
         <h1 className="text-5xl md:text-7xl font-bold text-[#44403c] mb-8 leading-[1.1] tracking-tight">
-          Egzotyka na <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5c6b50] to-[#4a5740]">Wyciągnięcie Ręki</span>
+          Terrarystyka i podróże <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5c6b50] to-[#4a5740]">w jednym</span>
         </h1>
-        <p className="text-lg text-[#78716c] mb-10 max-w-2xl mx-auto leading-relaxed font-normal"> Spiderra to Twoje okno na świat terrarystyki. Wyselekcjonowane gatunki i profesjonalny sprzęt w zasięgu ręki. </p>
+        <p className="text-lg mb-10 max-w-2xl mx-auto leading-relaxed font-bold"> Spiderra to Twoje okno na świat terrarystyki. Wyselekcjonowane gatunki i profesjonalny sprzęt w zasięgu ręki. </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <button onClick={() => navigateTo('shop')} className="px-10 py-4 bg-[#57534e] text-white rounded-xl font-semibold hover:bg-[#44403c] transition-all shadow-lg active:scale-95"> Przejdź do Sklepu </button>
           <button onClick={() => navigateTo('stream')} className="px-10 py-4 bg-white border border-[#d6d3d1] text-[#57534e] rounded-xl font-semibold hover:border-[#a8a29e] hover:text-[#292524] transition-all shadow-sm hover:shadow-md"> Oglądaj Live </button>
@@ -607,7 +485,7 @@ const HomeView = memo(({ navigateTo, products, onProductClick, addToCart }) => (
 
     {/* Sekcja Bestsellerów */}
     <section className="max-w-7xl mx-auto px-2">
-       <BestsellerSlider products={products} onProductClick={onProductClick} />
+       <BestsellerSlider products={products} onProductClick={onProductClick} addToCart={addToCart} />
     </section>
 
     {/* Sekcja Podróży - Zaktualizowana */}
@@ -673,7 +551,8 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
                   .filter(id => selectedTags.includes(id));
                 
                 if (selectedInGroup.length === 0) return true;
-                return p.tags && selectedInGroup.some(tag => p.tags.includes(tag));
+                // Bezpieczne sprawdzanie: p.tags musi być tablicą
+                return p.tags && Array.isArray(p.tags) && selectedInGroup.some(tag => p.tags.includes(tag));
             });
          });
        }
@@ -897,6 +776,271 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
   );
 });
 
+// --- AboutView ---
+const AboutView = memo(() => (
+  <div className="bg-white rounded-3xl border border-[#e5e5e0] p-8 md:p-16 animate-fade-in shadow-sm">
+    <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-12 items-center">
+      <div className="w-full md:w-1/2">
+        <Reveal className="rounded-3xl overflow-hidden shadow-lg border border-[#e7e5e4]">
+            <img src="/zdjecia/arek.png" alt="Arkadiusz Kołacki" className="w-full aspect-square object-cover" />
+        </Reveal>
+      </div>
+      <div className="w-full md:w-1/2">
+        <Reveal delay={200}>
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-[#44403c]">Cześć, jestem <span className="text-[#5c6b50]">Arek</span></h2>
+          <div className="space-y-4 text-[#78716c] leading-relaxed font-light">
+              <p>Witaj w Spiderra! Moja przygoda z ptasznikami zaczęła się w 2020 roku od małej Chromki. Dziś to pasja, którą dzielę się z Wami, oferując ptaszniki z różnych regionów świata oraz transmitując to jak żyją w naturze.</p>
+              <p>Każdy pająk który jest w mojej ofercie jest wybrany tak aby zarówno początkujący jak i zaawansowany hodowca znalazł coś dla siebie. Dbam o to, abyś mógł/mogła cieszyć się swoim małym zwierzakiem.</p>
+          </div>
+          
+          <div className="mt-8 p-6 bg-[#f0f0eb] rounded-2xl border border-[#e6e5d8] relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Icons.Bug className="w-24 h-24 text-[#5c6b50]" />
+            </div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-2 text-[#5c6b50]">
+                <Icons.MessageCircle className="w-6 h-6" />
+                <h3 className="font-bold text-lg">Potrzebujesz porady?</h3>
+              </div>
+              <p className="text-sm text-[#78716c] mb-4">
+                Dopiero zaczynasz i nie wiesz, jakiego pająka wybrać na start? Napisz do mnie – chętnie doradzę gatunek idealnie dopasowany do Twoich preferencji i warunków!
+              </p>
+              <a href={`mailto:${COMPANY_DATA.email}`} className="inline-flex items-center text-sm font-bold text-[#5c6b50] hover:text-[#4a5740] transition-colors border-b border-[#5c6b50] pb-0.5">
+                Napisz do mnie &rarr;
+              </a>
+            </div>
+          </div>
+
+          <div className="flex gap-8 pt-8 mt-4 border-t border-[#e5e5e0]">
+            <div><p className="text-3xl font-bold text-[#44403c]">20+</p><p className="text-xs text-[#a8a29e] uppercase font-bold tracking-widest mt-1">Gatunków</p></div>
+            <div><p className="text-3xl font-bold text-[#44403c]">100%</p><p className="text-xs text-[#a8a29e] uppercase font-bold tracking-widest mt-1">Wsparcia</p></div>
+          </div>
+        </Reveal>
+      </div>
+    </div>
+  </div>
+));
+
+// --- StreamView ---
+const StreamView = memo(() => (
+  <div className="animate-fade-in">
+    <div className="bg-[#292524] rounded-[2rem] overflow-hidden shadow-2xl border border-[#1c1917] max-w-5xl mx-auto text-[#d6d3d1]">
+      <div className="p-6 md:p-10 flex flex-col gap-8">
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></div>
+              <h2 className="text-white text-xl font-bold tracking-wide uppercase">Spiderra Live</h2>
+            </div>
+          </div>
+          
+          <div className="aspect-video bg-black rounded-2xl relative flex items-center justify-center border border-[#44403c] group cursor-pointer overflow-hidden">
+            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1548858881-80590a5525bc?auto=format&fit=crop&w=1200&q=40')] bg-cover bg-center opacity-30 blur-sm group-hover:scale-105 transition-transform duration-700"></div>
+            <div className="relative z-10 text-center">
+               <div className="w-16 h-16 bg-[#5c6b50]/80 text-[#f5f5f0] rounded-full flex items-center justify-center shadow-lg mb-4 mx-auto backdrop-blur-sm border border-[#4a5740]">
+                  <Icons.Video className="w-8 h-8 fill-current ml-0.5" />
+               </div>
+               <p className="text-[#a8a29e] text-xs font-medium mt-2 tracking-widest uppercase">Łączenie z kamerą...</p>
+            </div>
+          </div>
+          
+          <div className="mt-8 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#44403c] p-0.5 border border-[#57534e]">
+                <div className="w-full h-full rounded-[0.5rem] flex items-center justify-center overflow-hidden">
+                   <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain opacity-80" />
+                </div>
+              </div>
+              <div>
+                <p className="text-white font-medium text-sm">Następna transmisja...</p>
+                <p className="text-[#a8a29e] text-xs">Jordania 08/02</p>
+              </div>
+            </div>
+            <a href="https://kick.com/spiderra" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-[#44403c] text-[#e7e5e4] border border-[#57534e] px-6 py-3 rounded-xl font-bold text-xs hover:bg-[#57534e] transition-colors uppercase tracking-wider">
+               <Icons.Kick className="w-4 h-4" /> Obserwuj na Kick
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+));
+
+// --- ShippingReturnsView ---
+const ShippingReturnsView = memo(() => (
+  <div className="bg-white rounded-3xl border border-[#e5e5e0] p-8 md:p-16 animate-fade-in shadow-sm max-w-4xl mx-auto">
+    <div className="flex items-center gap-4 mb-8 border-b border-[#e5e5e0] pb-6">
+      <div className="p-3 bg-[#f5f5f0] rounded-xl text-[#5c6b50]"><Icons.Truck className="w-6 h-6" /></div>
+      <h2 className="text-2xl font-bold text-[#44403c]">Wysyłka i Zwroty</h2>
+    </div>
+    
+    <div className="prose prose-stone max-w-none text-[#78716c] leading-relaxed space-y-10 text-sm font-light">
+      
+      {/* Sekcja Wysyłki */}
+      <section className="space-y-4">
+        <h3 className="font-bold text-[#44403c] text-lg mb-2 border-b border-[#f5f5f4] pb-2">Metody i Koszty Dostawy</h3>
+        <p>Dbamy o to, aby Twoje zamówienie dotarło do Ciebie bezpiecznie i szybko. Oferujemy następujące opcje dostawy na terenie Polski:</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div className="bg-[#fafaf9] p-4 rounded-xl border border-[#e7e5e4] flex items-start gap-4">
+                <div className="p-2 bg-white rounded-lg border border-[#e7e5e4] text-[#5c6b50]"><Icons.Box className="w-5 h-5"/></div>
+                <div>
+                    <h4 className="font-bold text-[#44403c] mb-1">Paczkomaty InPost</h4>
+                    <p className="text-xs text-[#78716c]">Przedpłata: <strong className="text-[#5c6b50]">15.00 zł</strong></p>
+                    <p className="text-xs text-[#a8a29e] mt-1">Czas dostawy: 1-2 dni robocze</p>
+                </div>
+            </div>
+            <div className="bg-[#fafaf9] p-4 rounded-xl border border-[#e7e5e4] flex items-start gap-4">
+                <div className="p-2 bg-white rounded-lg border border-[#e7e5e4] text-[#5c6b50]"><Icons.Truck className="w-5 h-5"/></div>
+                <div>
+                    <h4 className="font-bold text-[#44403c] mb-1">Kurier DPD</h4>
+                    <p className="text-xs text-[#78716c]">Przedpłata: <strong className="text-[#5c6b50]">20.00 zł</strong></p>
+                    <p className="text-xs text-[#a8a29e] mt-1">Czas dostawy: 1 dzień roboczy</p>
+                </div>
+            </div>
+        </div>
+
+        <div className="bg-[#f0fdf4] p-4 rounded-xl border border-green-100 text-green-800 text-xs mt-4">
+            <strong>Ważne:</strong> Żywe zwierzęta wysyłamy wyłącznie <strong>od poniedziałku do środy</strong>, aby uniknąć ryzyka utknięcia przesyłki w magazynie kurierskim przez weekend. Akcesoria wysyłamy od poniedziałku do piątku.
+        </div>
+      </section>
+
+      {/* Sekcja Bezpieczeństwa */}
+      <section className="space-y-4">
+        <h3 className="font-bold text-[#44403c] text-lg mb-2 border-b border-[#f5f5f4] pb-2">Bezpieczeństwo Przesyłek (Heatpack)</h3>
+        <p>W okresie jesienno-zimowym (gdy temperatury spadają poniżej 10°C), do każdej przesyłki z żywym zwierzęciem <strong>obowiązkowo dokładamy wkład grzewczy (heatpack)</strong> oraz pakujemy pająka w styrobox. Koszt pakowania zimowego jest wliczony w cenę wysyłki lub doliczany automatycznie w koszyku.</p>
+        <p>Gwarantujemy, że zwierzęta są pakowane w sposób humanitarny i bezpieczny, uniemożliwiający im ucieczkę oraz chroniący przed wstrząsami.</p>
+      </section>
+
+      {/* Sekcja Gwarancji (LAG) */}
+      <section className="space-y-4">
+        <h3 className="font-bold text-[#44403c] text-lg mb-2 border-b border-[#f5f5f4] pb-2">Gwarancja Żywej Dostawy (LAG)</h3>
+        <p>Jesteśmy pewni naszych metod pakowania, dlatego udzielamy <strong>Gwarancji na Żywą Dostawę (Live Arrival Guarantee)</strong>. Oznacza to, że bierzemy pełną odpowiedzialność za dotarcie pająka żywego i zdrowego.</p>
+        <p className="font-bold mt-2">Warunki uznania gwarancji:</p>
+        <ul className="list-disc pl-5 space-y-1 marker:text-[#5c6b50]">
+            <li>Odbiór paczki w dniu doręczenia (w przypadku Paczkomatu - maksymalnie do 2 godzin od umieszczenia paczki w skrytce).</li>
+            <li><strong>Nagranie filmu z otwierania paczki (unboxing):</strong> Film musi być ciągły, bez cięć, pokazywać etykietę adresową oraz moment otwierania pojemnika ze zwierzęciem.</li>
+        </ul>
+        <p>W przypadku śmierci zwierzęcia w transporcie i spełnieniu powyższych warunków, zwracamy 100% ceny zwierzęcia lub wysyłamy nowy egzemplarz na nasz koszt (jeśli jest dostępny).</p>
+      </section>
+
+      {/* Sekcja Zwrotów */}
+      <section className="space-y-4">
+        <h3 className="font-bold text-[#44403c] text-lg mb-2 border-b border-[#f5f5f4] pb-2">Zwroty i Odstąpienie od Umowy</h3>
+        <p>Zgodnie z ustawą o prawach konsumenta, masz prawo odstąpić od umowy w terminie 14 dni od otrzymania towaru. </p>
+        <p className="font-bold text-stone-700">Akcesoria:</p>
+        <p>Zwracany towar musi być w stanie niezmienionym (nieużywany, w oryginalnym opakowaniu). Koszt odesłania towaru ponosi Kupujący.</p>
+        <p className="font-bold text-stone-700 mt-2">Żywe zwierzęta:</p>
+        <p>Ze względu na specyfikę towaru (rzecz ulegająca szybkiemu zepsuciu lub mająca krótki termin przydatności do użycia - art. 38 pkt 4 ustawy o prawach konsumenta), oraz ze względu na dobrostan zwierząt, prosimy o przemyślane zakupy. Zwrot żywych zwierząt jest procesem skomplikowanym i ryzykownym dla samego zwierzęcia. W przypadku chęci zwrotu, prosimy o pilny kontakt w celu ustalenia bezpiecznej procedury.</p>
+        <p className="mt-4">Adres do zwrotów: <br/>{COMPANY_DATA.name}<br/>{COMPANY_DATA.address}<br/>{COMPANY_DATA.zip} {COMPANY_DATA.city}</p>
+      </section>
+
+    </div>
+  </div>
+));
+
+// --- TermsView ---
+const TermsView = memo(() => (
+  <div className="bg-white rounded-3xl border border-[#e5e5e0] p-8 md:p-16 animate-fade-in shadow-sm max-w-4xl mx-auto">
+    <div className="flex items-center gap-4 mb-8 border-b border-[#e5e5e0] pb-6">
+      <div className="p-3 bg-[#f5f5f0] rounded-xl text-[#5c6b50]"><Icons.FileText className="w-6 h-6" /></div>
+      <h2 className="text-2xl font-bold text-[#44403c]">Regulamin Sklepu</h2>
+    </div>
+    <div className="prose prose-stone max-w-none text-[#78716c] leading-relaxed space-y-8 text-sm font-light">
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">I. Postanowienia ogólne</h3>
+        <p>Niniejszy Regulamin określa ogólne warunki, sposób świadczenia Usług drogą elektroniczną i sprzedaży prowadzonej za pośrednictwem Sklepu Internetowego www.spiderra.netlify.app. Sklep prowadzi {COMPANY_DATA.name}, wpisany do rejestru przedsiębiorców Centralnej Ewidencji i Informacji o Działalności Gospodarczej prowadzonej przez ministra właściwego ds. gospodarki pod adresem {COMPANY_DATA.address}, {COMPANY_DATA.zip} {COMPANY_DATA.city}, NIP {COMPANY_DATA.nip}, REGON {COMPANY_DATA.regon}, zwany dalej Sprzedawcą.</p>
+        <p className="mt-2">Kontakt ze Sprzedawcą odbywa się poprzez:</p>
+        <ul className="list-disc pl-5 mt-1 space-y-1 marker:text-[#5c6b50]">
+          <li>adres poczty elektronicznej: {COMPANY_DATA.email};</li>
+          <li>pod numerem telefonu: {COMPANY_DATA.phone};</li>
+          <li>formularz kontaktowy dostępny na stronach Sklepu Internetowego.</li>
+        </ul>
+        <p className="mt-2">Niniejszy Regulamin jest nieprzerwanie dostępny w witrynie internetowej, w sposób umożliwiający jego pozyskanie, odtwarzanie i utrwalanie jego treści poprzez wydrukowanie lub zapisanie na nośniku w każdej chwili.</p>
+      </section>
+      
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">II. Definicje</h3>
+        <ul className="list-disc pl-5 mt-1 space-y-1 marker:text-[#5c6b50]">
+           <li><strong>Klient</strong> – osoba fizyczna posiadająca pełną zdolność do czynności prawnych, osoba prawna lub jednostka organizacyjna nieposiadająca osobowości prawnej.</li>
+           <li><strong>Konsument</strong> – Klient będący osobą fizyczną dokonującą z przedsiębiorcą czynności prawnej niezwiązanej bezpośrednio z jej działalnością gospodarczą lub zawodową.</li>
+           <li><strong>Towar</strong> – produkt (w tym żywe zwierzę) prezentowany w Sklepie Internetowym.</li>
+           <li><strong>Umowa Sprzedaży</strong> – umowa sprzedaży Towaru zawierana albo zawarta między Klientem a Sprzedawcą za pośrednictwem Sklepu Internetowego.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">III. Warunki zawierania Umowy Sprzedaży</h3>
+        <p>1. Zawarcie Umowy Sprzedaży między Klientem a Sprzedawcą następuje po uprzednim złożeniu przez Klienta Zamówienia za pomocą Formularza Zamówienia w Sklepie Internetowym.</p>
+        <p>2. Cena Produktu uwidoczniona na stronie Sklepu Internetowego podana jest w złotych polskich i zawiera podatki. Cena nie zawiera kosztów dostawy, które są wskazywane w trakcie składania Zamówienia.</p>
+        <p>3. Płatności obsługiwane są przez zewnętrznego operatora płatności (Stripe), co gwarantuje bezpieczeństwo transakcji.</p>
+      </section>
+
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">IV. Dostawa i Odbiór</h3>
+        <p>1. Dostawa Towaru realizowana jest na terenie Polski.</p>
+        <p>2. Dostawa odbywa się w dni robocze, od poniedziałku do piątku (akcesoria) lub od poniedziałku do środy (żywe zwierzęta).</p>
+        <p>3. Sprzedawca stosuje politykę "Live Arrival Guarantee" (LAG) szczegółowo opisaną w zakładce "Wysyłka i Zwroty".</p>
+      </section>
+
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">V. Prawo odstąpienia od umowy</h3>
+        <p>1. Konsumentowi przysługuje prawo do odstąpienia od umowy w terminie 14 dni bez podania przyczyny (z zastrzeżeniem wyjątków określonych w ustawie).</p>
+        <p>2. Prawo to nie przysługuje w odniesieniu do umów, w których przedmiotem świadczenia jest rzecz ulegająca szybkiemu zepsuciu lub mająca krótki termin przydatności do użycia.</p>
+      </section>
+
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">VI. Postanowienia końcowe</h3>
+        <p>W sprawach nieuregulowanych w niniejszym Regulaminie mają zastosowanie powszechnie obowiązujące przepisy prawa polskiego, w szczególności: Kodeksu cywilnego, ustawy o świadczeniu usług drogą elektroniczną, ustawy o prawach konsumenta, ustawy o ochronie danych osobowych.</p>
+      </section>
+
+    </div>
+  </div>
+));
+
+// --- PrivacyView ---
+const PrivacyView = memo(() => (
+  <div className="bg-white rounded-3xl border border-[#e5e5e0] p-8 md:p-16 animate-fade-in shadow-sm max-w-4xl mx-auto">
+    <div className="flex items-center gap-4 mb-8 border-b border-[#e5e5e0] pb-6">
+      <div className="p-3 bg-[#f5f5f0] rounded-xl text-[#5c6b50]"><Icons.Lock className="w-6 h-6" /></div>
+      <h2 className="text-2xl font-bold text-[#44403c]">Polityka Prywatności</h2>
+    </div>
+    <div className="prose prose-stone max-w-none text-[#78716c] leading-relaxed space-y-8 text-sm font-light">
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">1. Administrator Danych</h3>
+        <p>Administratorem Twoich danych osobowych jest {COMPANY_DATA.name}, z siedzibą w {COMPANY_DATA.city}, przy ul. {COMPANY_DATA.address}, posiadający NIP: {COMPANY_DATA.nip} oraz REGON: {COMPANY_DATA.regon}.</p>
+        <p>Kontakt z Administratorem jest możliwy drogą elektroniczną pod adresem: {COMPANY_DATA.email} lub telefonicznie: {COMPANY_DATA.phone}.</p>
+      </section>
+
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">2. Cele i podstawy przetwarzania</h3>
+        <p>Przetwarzamy Twoje dane w celach:</p>
+        <ul className="list-disc pl-5 mt-1 space-y-1 marker:text-[#5c6b50]">
+           <li>zawarcia i wykonania umowy sprzedaży (art. 6 ust. 1 lit. b RODO),</li>
+           <li>realizacji obowiązków prawnych, np. wystawiania faktur (art. 6 ust. 1 lit. c RODO),</li>
+           <li>dochodzenia roszczeń i obrony przed nimi (art. 6 ust. 1 lit. f RODO),</li>
+           <li>analitycznych i statystycznych (art. 6 ust. 1 lit. f RODO).</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">3. Odbiorcy danych</h3>
+        <p>Twoje dane mogą być przekazywane podmiotom, które pomagają nam prowadzić sklep, np.: firmom kurierskim (InPost, DPD) w celu dostawy, operatorowi płatności (Stripe) w celu realizacji zapłaty, dostawcy hostingu i usług IT.</p>
+      </section>
+
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">4. Prawa użytkownika</h3>
+        <p>Przysługuje Ci prawo do dostępu do swoich danych, ich sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia danych, wniesienia sprzeciwu oraz wniesienia skargi do organu nadzorczego (Prezesa UODO).</p>
+      </section>
+
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">5. Pliki Cookies</h3>
+        <p>Sklep używa plików cookies (ciasteczka) w celu zapewnienia prawidłowego działania strony (np. utrzymania sesji koszyka) oraz w celach statystycznych. Możesz zarządzać ustawieniami cookies w swojej przeglądarce.</p>
+      </section>
+    </div>
+  </div>
+));
+
 // --- GŁÓWNA APLIKACJA ---
 export default function App() {
   const [activeView, setActiveView] = useState('home');
@@ -954,7 +1098,16 @@ export default function App() {
         const endpoint = isProduction ? `${API_URL}/get-products` : `${API_URL}/products`;
         const res = await fetch(endpoint);
         if (!res.ok) throw new Error();
-        const data = await res.json();
+        let data = await res.json();
+        
+        // NORMALIZACJA DANYCH
+        data = data.map(product => ({
+            ...product,
+            tags: typeof product.tags === 'string' ? product.tags.split(',').map(t => t.trim()) : (product.tags || []),
+            type: product.type || 'spider', 
+            latin: product.latin || '',
+        }));
+
         setProducts(data.length > 0 ? data : MOCK_PRODUCTS_DATA);
       } catch {
         setProducts(MOCK_PRODUCTS_DATA);
@@ -1069,6 +1222,7 @@ export default function App() {
             <button onClick={() => navigate('stream')} className="text-left">Transmisja</button>
             <button onClick={() => navigate('about')} className="text-left">O mnie</button>
             <div className="h-px bg-[#e7e5e4] w-full my-2"></div>
+            <button onClick={() => navigate('shipping')} className="text-[#78716c] text-base text-left font-medium">Wysyłka i Zwroty</button>
             <button onClick={() => navigate('terms')} className="text-[#78716c] text-base text-left font-medium">Regulamin</button>
             <button onClick={() => navigate('privacy')} className="text-[#78716c] text-base text-left font-medium">Polityka Prywatności</button>
           </div>
@@ -1083,6 +1237,7 @@ export default function App() {
         {activeView === 'stream' && <StreamView />}
         {activeView === 'terms' && <TermsView />}
         {activeView === 'privacy' && <PrivacyView />}
+        {activeView === 'shipping' && <ShippingReturnsView />}
         {activeView === 'success' && <SuccessView lastOrder={lastOrder} />}
         
         {/* Logika dla widoku sklepu i szczegółów produktu */}
@@ -1165,8 +1320,8 @@ export default function App() {
                 <img src={LOGO_URL} alt="Spiderra" className="h-10 w-auto object-contain grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition-all duration-500" />
               </div>
               <div className="flex gap-3">
-                <a href="https://www.instagram.com/spiderra.pl/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-[#f5f5f4] rounded-full flex items-center justify-center text-[#a8a29e] hover:bg-[#e7e5e4] hover:text-[#44403c] transition-all"><Icons.Instagram className="w-5 h-5"/></a>
-                <a href="https://www.tiktok.com/@spiderra.pl" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-[#f5f5f4] rounded-full flex items-center justify-center text-[#a8a29e] hover:bg-[#e7e5e4] hover:text-[#44403c] transition-all"><Icons.TikTok className="w-5 h-5"/></a>
+                <a href="https://www.instagram.com/sp_iderra" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-[#f5f5f4] rounded-full flex items-center justify-center text-[#a8a29e] hover:bg-[#e7e5e4] hover:text-[#44403c] transition-all"><Icons.Instagram className="w-5 h-5"/></a>
+                <a href="https://www.tiktok.com/@spiderra26" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-[#f5f5f4] rounded-full flex items-center justify-center text-[#a8a29e] hover:bg-[#e7e5e4] hover:text-[#44403c] transition-all"><Icons.TikTok className="w-5 h-5"/></a>
                 <a href="https://kick.com/spiderra" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-[#f5f5f4] rounded-full flex items-center justify-center text-[#a8a29e] hover:bg-[#e7e5e4] hover:text-[#44403c] transition-all"><Icons.Kick className="w-5 h-5"/></a>
               </div>
             </div>
@@ -1185,7 +1340,7 @@ export default function App() {
               <ul className="space-y-4 text-sm font-medium text-[#78716c]">
                 <li><button onClick={() => navigate('terms')} className="hover:text-[#44403c] text-left transition-colors">Regulamin</button></li>
                 <li><button onClick={() => navigate('privacy')} className="hover:text-[#44403c] text-left transition-colors">Polityka Prywatności</button></li>
-                <li><button onClick={() => navigate('terms')} className="hover:text-[#44403c] text-left transition-colors">Wysyłka i Zwroty</button></li>
+                <li><button onClick={() => navigate('shipping')} className="hover:text-[#44403c] text-left transition-colors">Wysyłka i Zwroty</button></li>
               </ul>
             </div>
 
@@ -1202,7 +1357,7 @@ export default function App() {
           </div>
           
           <div className="pt-8 border-t border-[#e7e5e4] flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold text-[#d6d3d1] tracking-widest uppercase">
-            <p>&copy; {new Date().getFullYear()} Spiderra. Wszystkie prawa zastrzeżone.</p>
+            <p>&copy; {new Date().getFullYear()} Spiderra ©. Wszystkie prawa zastrzeżone.</p>
           </div>
         </div>
       </footer>
