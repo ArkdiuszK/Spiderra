@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, memo, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, memo, useEffect, useRef } from 'react';
 
 // --- KONFIGURACJA API ---
 const isProduction = window.location.hostname !== 'localhost';
@@ -19,8 +19,53 @@ const COMPANY_DATA = {
 
 // --- KONFIGURACJA ZDJĘĆ ---
 const LOGO_URL = "/zdjecia/logo.png"; 
-// Tutaj wstaw ścieżkę do zdjęcia w tle na stronie głównej
 const HERO_IMAGE_URL = "/zdjecia/tlo.jpg"; 
+
+// --- DEFINICJA KATEGORII I GRUP FILTRÓW ---
+const PRODUCT_CATEGORIES = [
+  { id: 'all', label: 'Wszystko' },
+  { 
+    id: 'spider', 
+    label: 'Ptaszniki',
+    filterGroups: [
+      {
+        label: "Dla kogo?",
+        tags: [
+          { id: 'beginner', label: 'Dla początkujących' },
+          { id: 'intermediate', label: 'Dla średniozaawansowanych' },
+          { id: 'advanced', label: 'Dla zaawansowanych' }
+        ]
+      },
+      {
+        label: "Typ / Cechy",
+        tags: [
+          { id: 'terrestrial', label: 'Naziemne' },
+          { id: 'arboreal', label: 'Nadrzewne' },
+          { id: 'fossorial', label: 'Podziemne' },
+          { id: 'dwarf', label: 'Karłowate' },
+          { id: 'rare', label: 'Rzadkie' }
+        ]
+      }
+    ]
+  },
+  { 
+    id: 'gear', 
+    label: 'Akcesoria',
+    filterGroups: [
+      {
+        label: "Kategorie",
+        tags: [
+          { id: 'terrarium', label: 'Terraria' },
+          { id: 'container', label: 'Pojemniki hodowlane' },
+          { id: 'substrate', label: 'Podłoże' },
+          { id: 'tools', label: 'Narzędzia' },
+          { id: 'heating', label: 'Ogrzewanie' },
+          { id: 'decor', label: 'Wystrój' }
+        ]
+      }
+    ]
+  }
+];
 
 // --- PRZYŚPIESZONE ŁADOWANIE TAILWINDA ---
 if (typeof document !== 'undefined' && !document.getElementById('tailwind-cdn')) {
@@ -29,6 +74,43 @@ if (typeof document !== 'undefined' && !document.getElementById('tailwind-cdn'))
   script.src = "https://cdn.tailwindcss.com";
   document.head.appendChild(script);
 }
+
+// --- CUSTOM HOOK: REVEAL ON SCROLL ---
+const useReveal = () => {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => { if (ref.current) observer.unobserve(ref.current); };
+  }, []);
+
+  return [ref, isVisible];
+};
+
+const Reveal = ({ children, className = "", delay = 0 }) => {
+  const [ref, isVisible] = useReveal();
+  const transitionDelay = `${delay}ms`;
+  
+  return (
+    <div 
+      ref={ref} 
+      className={`transition-all duration-1000 ease-out transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'} ${className}`}
+      style={{ transitionDelay }}
+    >
+      {children}
+    </div>
+  );
+};
 
 // --- IKONY ---
 const IconBase = ({ children, className, ...props }) => (
@@ -50,7 +132,12 @@ const Icons = {
   FileText: (p) => <IconBase {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></IconBase>,
   Lock: (p) => <IconBase {...p}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></IconBase>,
   ArrowLeft: (p) => <IconBase {...p}><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></IconBase>,
+  ChevronLeft: (p) => <IconBase {...p}><polyline points="15 18 9 12 15 6" /></IconBase>,
+  ChevronRight: (p) => <IconBase {...p}><polyline points="9 18 15 12 9 6" /></IconBase>,
   Filter: (p) => <IconBase {...p}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></IconBase>,
+  MessageCircle: (p) => <IconBase {...p}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></IconBase>,
+  Camera: (p) => <IconBase {...p}><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></IconBase>,
+  ArrowRight: (p) => <IconBase {...p}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></IconBase>,
   Kick: (p) => (
     <svg viewBox="0 0 24 24" fill="currentColor" className={p.className} width="24" height="24">
       <path d="M12.9 16.7l-4.2-4.2 4.2-4.2h-3.8L5.9 11.6v-3.3H2.5v7.5h3.4v-3.3l3.2 3.3h3.8zM16.5 7.4h-3.4v9.3h3.4V7.4zM21.5 7.4h-3.4v9.3h3.4V7.4z"/>
@@ -64,8 +151,14 @@ const Icons = {
   Loader: (p) => <IconBase {...p} className={`animate-spin ${p.className}`}><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></IconBase>
 };
 
+// --- DANE PRZYKŁADOWE (MOCK) ---
 const MOCK_PRODUCTS_DATA = [
-  { id: 'spider1', name: 'Grammostola rosea', latin: 'Grammostola rosea', type: 'spider', price: 150.00, image: '/zdjecia/ptaszniki/grammostola_rosea.jpg', desc: 'Ptasznik z Chile, znany ze swojego spokojnego usposobienia i łatwości hodowli.' },
+  { id: 'spider1', name: 'Grammostola rosea', latin: 'Grammostola rosea', type: 'spider', tags: ['terrestrial', 'beginner', 'bestseller'], price: 150.00, image: '/zdjecia/ptaszniki/grammostola_rosea.jpg', desc: 'Ptasznik z Chile, znany ze swojego spokojnego usposobienia i łatwości hodowli. Gatunek naziemny, idealny dla początkujących.' },
+  { id: 'spider2', name: 'Caribena versicolor', latin: 'Caribena versicolor', type: 'spider', tags: ['arboreal', 'beginner', 'bestseller'], price: 85.00, image: 'https://placehold.co/400x300/e2e8f0/10b981?text=Versicolor', desc: 'Jeden z najpiękniejszych ptaszników nadrzewnych. Dzięki łagodnemu usposobieniu nadaje się na pierwszego pająka nadrzewnego.' },
+  { id: 'spider3', name: 'Theraphosa stirmi', latin: 'Theraphosa stirmi', type: 'spider', tags: ['terrestrial', 'advanced', 'rare'], price: 450.00, image: 'https://placehold.co/400x300/e2e8f0/991b1b?text=Stirmi', desc: 'Jeden z największych pająków świata. Wymaga doświadczenia w utrzymaniu odpowiedniej wilgotności.' },
+  { id: 'gear1', name: 'Pojemnik Braplast', latin: '19x19x19 cm', type: 'gear', tags: ['container'], price: 12.00, image: 'https://placehold.co/400x300/f1f5f9/64748b?text=Braplast', desc: 'Idealny pojemnik hodowlany dla średnich ptaszników oraz nadrzewnych podrostków.' },
+  { id: 'gear2', name: 'Włókno kokosowe', latin: 'Substrat prasowany', type: 'gear', tags: ['substrate', 'bestseller'], price: 15.00, image: 'https://placehold.co/400x300/f1f5f9/a8a29e?text=Włókno', desc: 'Podstawowe podłoże do terrariów. Dobrze trzyma wilgoć, bezpieczne dla zwierząt.' },
+  { id: 'gear3', name: 'Pęseta długa', latin: '30 cm', type: 'gear', tags: ['tools'], price: 25.00, image: 'https://placehold.co/400x300/e2e8f0/64748b?text=Pęseta', desc: 'Niezbędne narzędzie do karmienia i sprzątania w terrarium. Stal nierdzewna.' },
 ];
 
 const useCart = () => {
@@ -145,99 +238,248 @@ const SuccessView = memo(({ lastOrder }) => {
   );
 });
 
-const ProductDetailsView = memo(({ product, onBack, onAddToCart }) => (
-  <div className="bg-white rounded-3xl border border-[#e5e5e0] p-6 md:p-12 animate-fade-in shadow-sm max-w-6xl mx-auto">
-    <button onClick={onBack} className="flex items-center gap-2 text-[#78716c] hover:text-[#44403c] mb-8 font-medium transition-colors">
-      <Icons.ArrowLeft className="w-5 h-5" /> Wróć do sklepu
-    </button>
-    <div className="flex flex-col md:flex-row gap-12">
-      <div className="w-full md:w-1/2">
-        <div className="aspect-square rounded-3xl overflow-hidden bg-[#fafaf9] shadow-sm border border-[#e7e5e4]">
-          <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+// --- KOMPONENT: Bestseller Slider ---
+const BestsellerSlider = memo(({ products, onProductClick }) => {
+  const scrollRef = useRef(null);
+  
+  const bestsellers = useMemo(() => {
+    const tagged = products.filter(p => p.tags && p.tags.includes('bestseller'));
+    return tagged.length > 0 ? tagged : products.slice(0, 5); 
+  }, [products]);
+
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      const { current } = scrollRef;
+      const scrollAmount = 320; 
+      current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  if (bestsellers.length === 0) return null;
+
+  return (
+    <div className="relative group/slider">
+      <div className="flex items-center justify-between mb-6 px-2">
+        <h3 className="text-2xl font-bold text-[#44403c]">Bestsellery</h3>
+        <div className="flex gap-2">
+          <button onClick={() => scroll('left')} className="p-2 rounded-full border border-[#e7e5e4] text-[#78716c] hover:bg-[#f5f5f4] hover:text-[#44403c] transition-colors"><Icons.ChevronLeft className="w-5 h-5"/></button>
+          <button onClick={() => scroll('right')} className="p-2 rounded-full border border-[#e7e5e4] text-[#78716c] hover:bg-[#f5f5f4] hover:text-[#44403c] transition-colors"><Icons.ChevronRight className="w-5 h-5"/></button>
         </div>
       </div>
-      <div className="w-full md:w-1/2 flex flex-col">
+      
+      <div 
+        ref={scrollRef}
+        className="flex gap-6 overflow-x-auto pb-8 snap-x scroll-smooth no-scrollbar"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {bestsellers.map(product => (
+          <div 
+            key={product.id} 
+            className="flex-shrink-0 w-72 bg-white rounded-2xl border border-[#e5e5e0] snap-start hover:shadow-xl transition-all duration-300 group/card cursor-pointer"
+            onClick={() => onProductClick(product)}
+          >
+            <div className="h-48 overflow-hidden rounded-t-2xl bg-[#fafaf9] relative">
+              <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-700" />
+              <div className="absolute top-3 left-3 bg-[#5c6b50] text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider shadow-sm">
+                Top
+              </div>
+            </div>
+            <div className="p-5">
+              <p className="text-[#5c6b50] text-[10px] font-bold uppercase tracking-widest mb-1">{product.latin}</p>
+              <h4 className="font-bold text-lg text-[#44403c] mb-2 line-clamp-1">{product.name}</h4>
+              <div className="flex items-center justify-between mt-4">
+                <span className="text-xl font-bold text-[#44403c]">{product.price.toFixed(2)} zł</span>
+                <div className="w-8 h-8 rounded-full bg-[#f5f5f4] flex items-center justify-center text-[#44403c] group-hover/card:bg-[#57534e] group-hover/card:text-white transition-colors">
+                  <Icons.Plus className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
+
+// --- KOMPONENT: TRAVEL GALLERY ---
+const TravelGallery = memo(({ navigateTo }) => {
+  const photos = [
+    { id: 1, src: "/zdjecia/cypr.jpg", location: "Cypr", desc: "Tarantula w naturze" },
+    { id: 2, src: "/zdjecia/maroko.jpg", location: "Maroko", desc: "Marrakesz" },
+    { id: 3, src: "/zdjecia/madera.jpg", location: "Madera", desc: "Jardim Botânico da Madeira" },
+    { id: 4, src: "/zdjecia/hiszpania.JPG", location: "Hiszpania", desc: "Barcelona" },
+  ];
+
+  const displayPhotos = photos.slice(0, 4);
+
+  return (
+    <section className="max-w-7xl mx-auto px-6 pt-16">
+      <div className="flex flex-col md:flex-row items-end justify-between mb-10 gap-4">
         <div>
-          <p className="text-[#5c6b50] font-bold uppercase tracking-widest text-xs mb-2">{product.latin}</p>
-          <h2 className="text-4xl font-bold text-[#44403c] mb-4 leading-tight">{product.name}</h2>
-          <p className="text-2xl font-semibold text-[#57534e] mb-6">{product.price.toFixed(2)} PLN</p>
-          
-          <div className="prose prose-stone text-[#78716c] mb-8 leading-relaxed">
-            <p>{product.desc || "Brak szczegółowego opisu dla tego produktu."}</p>
-            <div className="mt-6 flex flex-col gap-2 text-sm">
-               <p><span className="font-semibold text-[#44403c]">Dostępność:</span> W magazynie</p>
-               <p><span className="font-semibold text-[#44403c]">Wysyłka:</span> 24h (Dni robocze)</p>
+          <div className="flex items-center gap-2 mb-2 text-[#5c6b50]">
+            <Icons.Camera className="w-5 h-5" />
+            <span className="text-xs font-bold uppercase tracking-widest">Ekspedycje</span>
+          </div>
+          <h3 className="text-3xl md:text-4xl font-bold text-[#44403c]">Z Dziennika Podróży</h3>
+        </div>
+        <p className="text-[#78716c] text-sm max-w-md text-right md:text-left font-normal leading-relaxed">
+          A oto miejsca, które odwiedziłem...
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 auto-rows-[250px] gap-4">
+        {displayPhotos.map((photo, index) => (
+          <div 
+            key={photo.id}
+            className={`relative rounded-3xl overflow-hidden group cursor-pointer shadow-sm border border-[#e5e5e0] ${
+              index === 0 ? 'md:col-span-2 md:row-span-2' : 'md:col-span-1'
+            }`}
+          >
+            <img src={photo.src} alt={photo.location} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
+              <p className="text-white font-bold text-lg">{photo.location}</p>
+              {index === 0 && <p className="text-stone-300 text-sm mt-1">{photo.desc}</p>}
+            </div>
+          </div>
+        ))}
+
+        <div 
+          onClick={() => navigateTo('stream')} 
+          className="relative rounded-3xl overflow-hidden shadow-sm border border-[#e5e5e0] bg-[#57534e] flex flex-col items-center justify-center p-6 text-center cursor-pointer group hover:bg-[#44403c] transition-colors md:col-span-1"
+        >
+            <p className="text-white font-bold text-xl mb-2">...i wiele więcej!</p>
+            <p className="text-[#a8a29e] text-xs leading-relaxed max-w-[150px]">
+              Śledź moje wyprawy na bieżąco w sekcji Transmisja.
+            </p>
+            <div className="mt-6 p-3 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors">
+                <Icons.ArrowRight className="w-5 h-5 text-white" />
+            </div>
+        </div>
+      </div>
+    </section>
+  );
+});
+
+// --- Produkt Details (z Cross-Selling) ---
+const ProductDetailsView = memo(({ product, onBack, onAddToCart, allProducts }) => {
+  const relatedProducts = useMemo(() => {
+    if (!allProducts) return [];
+    if (product.type === 'spider') {
+      return allProducts.filter(p => p.type === 'gear').slice(0, 3);
+    } else {
+      return allProducts.filter(p => p.id !== product.id).sort(() => 0.5 - Math.random()).slice(0, 3);
+    }
+  }, [product, allProducts]);
+
+  return (
+    <div className="animate-fade-in space-y-12">
+      <div className="bg-white rounded-3xl border border-[#e5e5e0] p-6 md:p-12 shadow-sm max-w-6xl mx-auto">
+        <button onClick={onBack} className="flex items-center gap-2 text-[#78716c] hover:text-[#44403c] mb-8 font-medium transition-colors">
+          <Icons.ArrowLeft className="w-5 h-5" /> Wróć do sklepu
+        </button>
+        <div className="flex flex-col md:flex-row gap-12">
+          <div className="w-full md:w-1/2">
+            <div className="aspect-square rounded-3xl overflow-hidden bg-[#fafaf9] shadow-sm border border-[#e7e5e4]">
+              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+            </div>
+          </div>
+          <div className="w-full md:w-1/2 flex flex-col">
+            <div>
+              <p className="text-[#5c6b50] font-bold uppercase tracking-widest text-xs mb-2">{product.latin}</p>
+              <h2 className="text-4xl font-bold text-[#44403c] mb-4 leading-tight">{product.name}</h2>
+              <p className="text-2xl font-semibold text-[#57534e] mb-6">{product.price.toFixed(2)} PLN</p>
+              
+              <div className="prose prose-stone text-[#78716c] mb-8 leading-relaxed">
+                <p>{product.desc || "Brak szczegółowego opisu dla tego produktu."}</p>
+                <div className="mt-6 flex flex-col gap-2 text-sm">
+                   <p><span className="font-semibold text-[#44403c]">Dostępność:</span> W magazynie</p>
+                   <p><span className="font-semibold text-[#44403c]">Wysyłka:</span> 24h (Dni robocze)</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-auto pt-8 border-t border-[#e5e5e0]">
+              <button 
+                onClick={() => onAddToCart(product)} 
+                className="w-full py-4 bg-[#57534e] text-white rounded-xl font-bold text-lg hover:bg-[#44403c] transition-all shadow-md flex items-center justify-center gap-3 active:scale-[0.98]"
+              >
+                <Icons.Plus className="w-6 h-6" /> Dodaj do koszyka
+              </button>
             </div>
           </div>
         </div>
-        
-        <div className="mt-auto pt-8 border-t border-[#e5e5e0]">
-          <button 
-            onClick={() => onAddToCart(product)} 
-            className="w-full py-4 bg-[#57534e] text-white rounded-xl font-bold text-lg hover:bg-[#44403c] transition-all shadow-md flex items-center justify-center gap-3 active:scale-[0.98]"
-          >
-            <Icons.Plus className="w-6 h-6" /> Dodaj do koszyka
-          </button>
+      </div>
+
+      {relatedProducts.length > 0 && (
+        <div className="max-w-6xl mx-auto">
+           <h3 className="text-2xl font-bold text-[#44403c] mb-6 px-2">Warto dokupić</h3>
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {relatedProducts.map(rp => (
+                <div key={rp.id} className="bg-white rounded-2xl border border-[#e5e5e0] p-4 flex flex-col hover:border-[#d6d3d1] transition-all shadow-sm hover:shadow-md">
+                   <div className="h-40 bg-[#fafaf9] rounded-xl overflow-hidden mb-4 relative">
+                      <img src={rp.image} alt={rp.name} className="w-full h-full object-cover" />
+                      <button onClick={() => onAddToCart(rp)} className="absolute bottom-2 right-2 bg-white p-2 rounded-lg shadow-sm text-[#44403c] hover:bg-[#57534e] hover:text-white transition-colors">
+                        <Icons.Plus className="w-5 h-5" />
+                      </button>
+                   </div>
+                   <h4 className="font-bold text-[#44403c] text-sm mb-1">{rp.name}</h4>
+                   <p className="text-[#a8a29e] text-xs line-clamp-1 mb-2">{rp.desc}</p>
+                   <p className="text-[#5c6b50] font-bold text-sm mt-auto">{rp.price.toFixed(2)} PLN</p>
+                </div>
+              ))}
+           </div>
         </div>
-      </div>
+      )}
     </div>
-  </div>
-));
+  );
+});
 
-const HomeView = memo(({ navigateTo }) => (
-  <div className={`relative min-h-[70vh] flex items-center justify-center animate-fade-in overflow-hidden rounded-3xl border border-[#e7e5e4] ${HERO_IMAGE_URL ? '' : 'bg-[#fafaf9]'}`}>
-    
-    {/* Tło */}
-    {HERO_IMAGE_URL ? (
-      <>
-        <img src={HERO_IMAGE_URL} alt="Background" className="absolute inset-0 w-full h-full object-cover" />
-        {/* Nakładka (overlay) - mocniejsza, aby tekst był czytelny */}
-        <div className="absolute inset-0 bg-[#faf9f6]/45 backdrop-blur-sm"></div>
-      </>
-    ) : (
-      <div className="absolute inset-0 bg-gradient-to-br from-[#f5f5f4] via-[#faf9f6] to-[#e6e5d8]/30"></div>
-    )}
-
-    <div className="text-center px-4 max-w-4xl mx-auto relative z-10">
-      <div className="inline-block px-4 py-1.5 mb-6 text-xs font-bold tracking-widest text-[#5c6b50] uppercase bg-[#f0f0eb] rounded-full border border-[#e6e5d8] shadow-sm">
-        Nowości już dostępne!
-      </div>
-      <h1 className="text-5xl md:text-7xl font-bold text-[#44403c] mb-8 leading-[1.1] tracking-tight">
-        Egzotyka na <br />
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5c6b50] to-[#4a5740]">Wyciągnięcie Ręki</span>
-      </h1>
-      <p className="text-lg mb-10 max-w-2xl mx-auto leading-relaxed font-normal"> <b>Spiderra</b> to Twoje okno na świat terrarystyki. Wyselekcjonowane gatunki i profesjonalny sprzęt w zasięgu ręki. </p>
-      <div className="flex flex-col sm:flex-row justify-center gap-4">
-        <button onClick={() => navigateTo('shop')} className="px-10 py-4 bg-[#57534e] text-white rounded-xl font-semibold hover:bg-[#44403c] transition-all shadow-lg active:scale-95"> Przejdź do Sklepu </button>
-        <button onClick={() => navigateTo('stream')} className="px-10 py-4 bg-white border border-[#d6d3d1] text-[#57534e] rounded-xl font-semibold hover:border-[#a8a29e] hover:text-[#292524] transition-all shadow-sm hover:shadow-md"> Oglądaj Live </button>
-      </div>
-    </div>
-  </div>
-));
-
+// --- AboutView ---
 const AboutView = memo(() => (
   <div className="bg-white rounded-3xl border border-[#e5e5e0] p-8 md:p-16 animate-fade-in shadow-sm">
     <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-12 items-center">
       <div className="w-full md:w-1/2">
-        <div className="rounded-3xl overflow-hidden shadow-lg border border-[#e7e5e4]">
+        <Reveal className="rounded-3xl overflow-hidden shadow-lg border border-[#e7e5e4]">
             <img src="/zdjecia/arek.png" alt="Arkadiusz Kołacki" className="w-full aspect-square object-cover" />
-        </div>
+        </Reveal>
       </div>
       <div className="w-full md:w-1/2">
-        <h2 className="text-3xl md:text-4xl font-bold mb-6 text-[#44403c]">Cześć, jestem <span className="text-[#5c6b50]">Arek</span></h2>
-        <div className="space-y-4 text-[#78716c] leading-relaxed font-light">
-            <p>Witaj w Spiderra! Moja przygoda z ptasznikami zaczęła się w 2020 roku od małej Chromki. Dziś to pasja, którą dzielę się z Wami, oferując ptaszniki z różnych regionów świata oraz transmitując to jak żyją w naturze.</p>
-            <p>Każdy pająk który jest w mojej ofercie jest wybrany tak aby zarówno początkujący jak i zaawansowany hodowca znalazł coś dla siebie. Dbam o to, abyś mógł/mogła cieszyć się swoim małym zwierzakiem.</p>
-        </div>
-        <div className="flex gap-8 pt-8 mt-4 border-t border-[#e5e5e0]">
-          <div><p className="text-3xl font-bold text-[#44403c]">20+</p><p className="text-xs text-[#a8a29e] uppercase font-bold tracking-widest mt-1">Gatunków</p></div>
-          <div><p className="text-3xl font-bold text-[#44403c]">100%</p><p className="text-xs text-[#a8a29e] uppercase font-bold tracking-widest mt-1">Wsparcia</p></div>
-        </div>
+        <Reveal delay={200}>
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-[#44403c]">Cześć, jestem <span className="text-[#5c6b50]">Arek</span></h2>
+          <div className="space-y-4 text-[#78716c] leading-relaxed font-light">
+              <p>Witaj w Spiderra! Moja przygoda z ptasznikami zaczęła się w 2020 roku od małej Chromki. Dziś to pasja, którą dzielę się z Wami, oferując ptaszniki z różnych regionów świata oraz transmitując to jak żyją w naturze.</p>
+              <p>Każdy pająk który jest w mojej ofercie jest wybrany tak aby zarówno początkujący jak i zaawansowany hodowca znalazł coś dla siebie. Dbam o to, abyś mógł/mogła cieszyć się swoim małym zwierzakiem.</p>
+          </div>
+          
+          <div className="mt-8 p-6 bg-[#f0f0eb] rounded-2xl border border-[#e6e5d8] relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Icons.Bug className="w-24 h-24 text-[#5c6b50]" />
+            </div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-2 text-[#5c6b50]">
+                <Icons.MessageCircle className="w-6 h-6" />
+                <h3 className="font-bold text-lg">Potrzebujesz porady?</h3>
+              </div>
+              <p className="text-sm text-[#78716c] mb-4">
+                Dopiero zaczynasz i nie wiesz, jakiego pająka wybrać na start? Napisz do mnie – chętnie doradzę gatunek idealnie dopasowany do Twoich preferencji i warunków!
+              </p>
+              <a href={`mailto:${COMPANY_DATA.email}`} className="inline-flex items-center text-sm font-bold text-[#5c6b50] hover:text-[#4a5740] transition-colors border-b border-[#5c6b50] pb-0.5">
+                Napisz do mnie &rarr;
+              </a>
+            </div>
+          </div>
+
+          <div className="flex gap-8 pt-8 mt-4 border-t border-[#e5e5e0]">
+            <div><p className="text-3xl font-bold text-[#44403c]">20+</p><p className="text-xs text-[#a8a29e] uppercase font-bold tracking-widest mt-1">Gatunków</p></div>
+            <div><p className="text-3xl font-bold text-[#44403c]">100%</p><p className="text-xs text-[#a8a29e] uppercase font-bold tracking-widest mt-1">Wsparcia</p></div>
+          </div>
+        </Reveal>
       </div>
     </div>
   </div>
 ));
 
+// --- StreamView ---
 const StreamView = memo(() => (
   <div className="animate-fade-in">
     <div className="bg-[#292524] rounded-[2rem] overflow-hidden shadow-2xl border border-[#1c1917] max-w-5xl mx-auto text-[#d6d3d1]">
@@ -247,6 +489,9 @@ const StreamView = memo(() => (
             <div className="flex items-center gap-3">
               <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></div>
               <h2 className="text-white text-xl font-bold tracking-wide uppercase">Spiderra Live</h2>
+            </div>
+            <div className="flex items-center gap-2 bg-[#44403c] px-3 py-1 rounded-full border border-[#57534e]">
+              <span className="text-xs font-bold text-[#a8a29e] uppercase tracking-widest">Aktualnie online</span>
             </div>
           </div>
           
@@ -283,13 +528,119 @@ const StreamView = memo(() => (
   </div>
 ));
 
+// --- TermsView ---
+const TermsView = memo(() => (
+  <div className="bg-white rounded-3xl border border-[#e5e5e0] p-8 md:p-16 animate-fade-in shadow-sm max-w-4xl mx-auto">
+    <div className="flex items-center gap-4 mb-8 border-b border-[#e5e5e0] pb-6">
+      <div className="p-3 bg-[#f5f5f0] rounded-xl text-[#5c6b50]"><Icons.FileText className="w-6 h-6" /></div>
+      <h2 className="text-2xl font-bold text-[#44403c]">Regulamin Sklepu</h2>
+    </div>
+    <div className="prose prose-stone max-w-none text-[#78716c] leading-relaxed space-y-8 text-sm font-light">
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">I. Postanowienia ogólne</h3>
+        <p>Niniejszy Regulamin określa ogólne warunki, sposób świadczenia Usług drogą elektroniczną i sprzedaży prowadzonej za pośrednictwem Sklepu Internetowego www.spiderra.netlify.app. Sklep prowadzi {COMPANY_DATA.name}, wpisany do rejestru przedsiębiorców Centralnej Ewidencji i Informacji o Działalności Gospodarczej prowadzonej przez ministra właściwego ds. gospodarki pod adresem {COMPANY_DATA.address}, {COMPANY_DATA.zip} {COMPANY_DATA.city}, NIP {COMPANY_DATA.nip}, REGON {COMPANY_DATA.regon}, zwany dalej Sprzedawcą.</p>
+        <p className="mt-2">Kontakt ze Sprzedawcą odbywa się poprzez:</p>
+        <ul className="list-disc pl-5 mt-1 space-y-1 marker:text-[#5c6b50]">
+          <li>adres poczty elektronicznej: {COMPANY_DATA.email};</li>
+          <li>pod numerem telefonu: {COMPANY_DATA.phone};</li>
+          <li>formularz kontaktowy dostępny na stronach Sklepu Internetowego.</li>
+        </ul>
+        <p className="mt-2">Niniejszy Regulamin jest nieprzerwanie dostępny w witrynie internetowej, w sposób umożliwiający jego pozyskanie, odtwarzanie i utrwalanie jego treści poprzez wydrukowanie lub zapisanie na nośniku w każdej chwili.</p>
+        <p className="mt-2">Sprzedawca informuje, że korzystanie z Usług świadczonych drogą elektroniczną może wiązać się z zagrożeniem po stronie każdego użytkownika sieci Internet, polegającym na możliwości wprowadzenia do systemu teleinformatycznego Klienta szkodliwego oprogramowania oraz pozyskania i modyfikacji jego danych przez osoby nieuprawnione. By uniknąć ryzyka wystąpienia zagrożeń w/w Klient powinien stosować właściwe środki techniczne, które zminimalizują ich wystąpienie, a w szczególności programy antywirusowe i zaporę sieciową typu firewall.</p>
+      </section>
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">XIV. Postanowienia końcowe</h3>
+        <p>Wszelkie prawa do Sklepu Internetowego, w tym majątkowe prawa autorskie, prawa własności intelektualnej do jego nazwy, domeny internetowej, strony internetowej Sklepu Internetowego, a także do formularzy, logotypów należą do Sprzedawcy.</p>
+        <p>W sprawach nieuregulowanych w niniejszym Regulaminie mają zastosowanie przepisy Kodeksu Cywilnego, przepisy Ustawy o świadczeniu usług drogą elektroniczną, przepisy Ustawy o prawach Konsumenta oraz inne właściwe przepisy prawa polskiego.</p>
+      </section>
+    </div>
+  </div>
+));
+
+// --- PrivacyView ---
+const PrivacyView = memo(() => (
+  <div className="bg-white rounded-3xl border border-[#e5e5e0] p-8 md:p-16 animate-fade-in shadow-sm max-w-4xl mx-auto">
+    <div className="flex items-center gap-4 mb-8 border-b border-[#e5e5e0] pb-6">
+      <div className="p-3 bg-[#f5f5f0] rounded-xl text-[#5c6b50]"><Icons.Lock className="w-6 h-6" /></div>
+      <h2 className="text-2xl font-bold text-[#44403c]">Polityka Prywatności</h2>
+    </div>
+    <div className="prose prose-stone max-w-none text-[#78716c] leading-relaxed space-y-8 text-sm font-light">
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">CZYM JEST POLITYKA PRYWATNOŚCI?</h3>
+        <p>Chcielibyśmy zapoznać Cię ze szczegółami przetwarzania przez nas Twoich danych osobowych, aby dać Ci pełną wiedzę i komfort w korzystaniu z naszej strony internetowej.</p>
+        <p className="mt-2">W związku z tym, że sami działamy w branży internetowej, wiemy jak ważna jest ochrona Twoich danych osobowych. Dlatego dokładamy szczególnych starań, aby chronić Twoją prywatność i informacje, które nam przekazujesz.</p>
+        <p className="mt-4 font-bold text-[#44403c]">Kto jest administratorem strony internetowej?</p>
+        <p>Administratorem strony internetowej jest {COMPANY_DATA.name}, wpisany do rejestru przedsiębiorców Centralnej Ewidencji i Informacji o Działalności Gospodarczej prowadzonej przez ministra właściwego ds. gospodarki pod adresem {COMPANY_DATA.address}, {COMPANY_DATA.zip} {COMPANY_DATA.city}, NIP {COMPANY_DATA.nip}, REGON {COMPANY_DATA.regon} (czyli: my).</p>
+      </section>
+    </div>
+  </div>
+));
+
+// --- HOME VIEW ---
+const HomeView = memo(({ navigateTo, products, onProductClick, addToCart }) => (
+  <div className="animate-fade-in space-y-16 pb-12">
+    <div className={`relative min-h-[70vh] flex items-center justify-center overflow-hidden rounded-3xl border border-[#e7e5e4] ${HERO_IMAGE_URL ? '' : 'bg-[#fafaf9]'}`}>
+      {HERO_IMAGE_URL ? (
+        <>
+          <img src={HERO_IMAGE_URL} alt="Background" className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-[#faf9f6]/70 backdrop-blur-s"></div>
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-[#f5f5f4] via-[#faf9f6] to-[#e6e5d8]/30"></div>
+      )}
+
+      <div className="text-center px-4 max-w-4xl mx-auto relative z-10">
+        <div className="inline-block px-4 py-1.5 mb-6 text-xs font-bold tracking-widest text-[#5c6b50] uppercase bg-[#f0f0eb] rounded-full border border-[#e6e5e4] shadow-sm">
+          Nowości już dostępne!
+        </div>
+        <h1 className="text-5xl md:text-7xl font-bold text-[#44403c] mb-8 leading-[1.1] tracking-tight">
+          Egzotyka na <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5c6b50] to-[#4a5740]">Wyciągnięcie Ręki</span>
+        </h1>
+        <p className="text-lg text-[#78716c] mb-10 max-w-2xl mx-auto leading-relaxed font-normal"> Spiderra to Twoje okno na świat terrarystyki. Wyselekcjonowane gatunki i profesjonalny sprzęt w zasięgu ręki. </p>
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <button onClick={() => navigateTo('shop')} className="px-10 py-4 bg-[#57534e] text-white rounded-xl font-semibold hover:bg-[#44403c] transition-all shadow-lg active:scale-95"> Przejdź do Sklepu </button>
+          <button onClick={() => navigateTo('stream')} className="px-10 py-4 bg-white border border-[#d6d3d1] text-[#57534e] rounded-xl font-semibold hover:border-[#a8a29e] hover:text-[#292524] transition-all shadow-sm hover:shadow-md"> Oglądaj Live </button>
+        </div>
+      </div>
+    </div>
+
+    {/* Sekcja Bestsellerów */}
+    <section className="max-w-7xl mx-auto px-2">
+       <BestsellerSlider products={products} onProductClick={onProductClick} />
+    </section>
+
+    {/* Sekcja Podróży - Zaktualizowana */}
+    <TravelGallery navigateTo={navigateTo} />
+  </div>
+));
+
+// --- SHOP VIEW ---
 const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
   const [category, setCategory] = useState('all');
+  const [selectedTags, setSelectedTags] = useState([]); 
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(1000);
-  const [sortOrder, setSortOrder] = useState('default'); 
+  const [sortOrder, setSortOrder] = useState('default');
+  const [currentPage, setCurrentPage] = useState(1); 
+  const ITEMS_PER_PAGE = 9;
 
-  // Obliczanie maksymalnej ceny
+  const handleCategoryChange = (newCategory) => {
+    setCategory(newCategory);
+    setSelectedTags([]);
+  };
+
+  const toggleTag = (tagId) => {
+    setSelectedTags(prev => {
+        if (tagId === 'all') return [];
+        if (prev.includes(tagId)) {
+            return prev.filter(t => t !== tagId);
+        } else {
+            return [...prev, tagId];
+        }
+    });
+  };
+
   const productsMaxPrice = useMemo(() => {
     if (products.length === 0) return 1000;
     return Math.max(...products.map(p => p.price));
@@ -301,11 +652,31 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
     }
   }, [productsMaxPrice, products]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [category, selectedTags, minPrice, maxPrice, sortOrder]);
+
   const filtered = useMemo(() => {
     let result = products;
 
     if (category !== 'all') {
       result = result.filter(p => p.type === category);
+    }
+
+    if (selectedTags.length > 0) {
+       const categoryDef = PRODUCT_CATEGORIES.find(c => c.id === category);
+       if (categoryDef && categoryDef.filterGroups) {
+         result = result.filter(p => {
+            return categoryDef.filterGroups.every(group => {
+                const selectedInGroup = group.tags
+                  .map(t => t.id)
+                  .filter(id => selectedTags.includes(id));
+                
+                if (selectedInGroup.length === 0) return true;
+                return p.tags && selectedInGroup.some(tag => p.tags.includes(tag));
+            });
+         });
+       }
     }
 
     result = result.filter(p => p.price >= minPrice && p.price <= maxPrice);
@@ -317,7 +688,18 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
     }
 
     return result;
-  }, [category, minPrice, maxPrice, sortOrder, products]);
+  }, [category, selectedTags, minPrice, maxPrice, sortOrder, products]);
+
+  const currentFilterGroups = useMemo(() => {
+    const selectedCat = PRODUCT_CATEGORIES.find(c => c.id === category);
+    return selectedCat ? (selectedCat.filterGroups || []) : [];
+  }, [category]);
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedProducts = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-24">
@@ -331,7 +713,6 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
       
       {/* --- SUWAK I FILTRY CSS --- */}
       <style>{`
-        /* Style dla suwaków dual-range */
         .range-slider-container { position: relative; width: 100%; height: 24px; }
         .range-slider-input {
             position: absolute; pointer-events: none; -webkit-appearance: none;
@@ -355,168 +736,168 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
         }
       `}</style>
 
-      {/* Pasek Filtrów */}
+      {/* Panel Filtrów */}
       <div className="mb-10 bg-white p-6 rounded-2xl border border-[#e5e5e0] shadow-sm">
-        <div className="flex flex-col lg:flex-row gap-8 justify-between items-start lg:items-center">
-          
-          {/* Kategorie */}
-          <div className="flex flex-wrap gap-3">
-            {[{ id: 'all', label: 'Wszystko' }, { id: 'spider', label: 'Ptaszniki' }, { id: 'gear', label: 'Akcesoria' }].map(f => (
-              <button 
-                key={f.id} 
-                onClick={() => setCategory(f.id)} 
-                className={`px-6 py-2 rounded-xl font-medium text-sm transition-all border ${category === f.id ? 'bg-[#57534e] text-white border-[#57534e] shadow-md' : 'bg-[#fafaf9] text-[#78716c] border-[#e7e5e4] hover:bg-[#e7e5e4] hover:text-[#44403c]'}`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Cena i Sortowanie */}
-          <div className="flex flex-col sm:flex-row gap-8 w-full lg:w-auto">
-            
-            {/* Profesjonalny Suwak Ceny */}
-            <div className="flex flex-col gap-2 min-w-[240px]">
-              <div className="flex justify-between text-xs text-[#78716c] font-medium font-mono">
-                 <span>{minPrice} zł</span>
-                 <span>{maxPrice} zł</span>
-              </div>
-              
-              <div className="range-slider-container">
-                 <div className="range-track"></div>
-                 <div 
-                    className="range-track-active"
-                    style={{
-                        left: `${(minPrice / productsMaxPrice) * 100}%`,
-                        width: `${((maxPrice - minPrice) / productsMaxPrice) * 100}%`
-                    }}
-                 ></div>
-                 
-                 {/* Wizualne uchwyty */}
-                 <div className="range-thumb" style={{ left: `${(minPrice / productsMaxPrice) * 100}%` }}></div>
-                 <div className="range-thumb" style={{ left: `${(maxPrice / productsMaxPrice) * 100}%` }}></div>
-
-                 {/* Niewidoczne inputy do sterowania */}
-                 <input 
-                    type="range" min="0" max={productsMaxPrice} step="1"
-                    value={minPrice} 
-                    onChange={(e) => {
-                        const val = Math.min(Number(e.target.value), maxPrice - 10);
-                        setMinPrice(val);
-                    }}
-                    className="range-slider-input"
-                 />
-                 <input 
-                    type="range" min="0" max={productsMaxPrice} step="1"
-                    value={maxPrice} 
-                    onChange={(e) => {
-                        const val = Math.max(Number(e.target.value), minPrice + 10);
-                        setMaxPrice(val);
-                    }}
-                    className="range-slider-input"
-                 />
-              </div>
+        <div className="flex flex-col gap-6">
+          {/* ... (górna część filtrów bez zmian) ... */}
+          <div className="flex flex-col lg:flex-row gap-8 justify-between items-start lg:items-center">
+            <div className="flex flex-wrap gap-3">
+              {PRODUCT_CATEGORIES.map(f => (
+                <button 
+                  key={f.id} 
+                  onClick={() => handleCategoryChange(f.id)} 
+                  className={`px-6 py-2 rounded-xl font-medium text-sm transition-all border ${category === f.id ? 'bg-[#57534e] text-white border-[#57534e] shadow-md' : 'bg-[#fafaf9] text-[#78716c] border-[#e7e5e4] hover:bg-[#e7e5e4] hover:text-[#44403c]'}`}
+                >
+                  {f.label}
+                </button>
+              ))}
             </div>
 
-            <div className="relative min-w-[160px]">
-              <select 
-                value={sortOrder} 
-                onChange={(e) => setSortOrder(e.target.value)}
-                className="w-full px-4 py-2.5 pr-8 rounded-xl border border-[#e7e5e4] text-sm focus:outline-none focus:ring-1 focus:ring-[#5c6b50] bg-[#fafaf9] text-[#44403c] appearance-none cursor-pointer"
-              >
-                <option value="default">Domyślnie</option>
-                <option value="asc">Cena: Rosnąco</option>
-                <option value="desc">Cena: Malejąco</option>
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-[#78716c]">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+            <div className="flex flex-col sm:flex-row gap-8 w-full lg:w-auto items-center">
+              <div className="flex flex-col gap-2 min-w-[240px] w-full sm:w-auto">
+                <div className="flex justify-between text-xs text-[#78716c] font-medium font-mono">
+                   <span>{minPrice} zł</span>
+                   <span>{maxPrice} zł</span>
+                </div>
+                <div className="range-slider-container">
+                   <div className="range-track"></div>
+                   <div 
+                      className="range-track-active"
+                      style={{
+                          left: `${(minPrice / productsMaxPrice) * 100}%`,
+                          width: `${((maxPrice - minPrice) / productsMaxPrice) * 100}%`
+                      }}
+                   ></div>
+                   <div className="range-thumb" style={{ left: `${(minPrice / productsMaxPrice) * 100}%` }}></div>
+                   <div className="range-thumb" style={{ left: `${(maxPrice / productsMaxPrice) * 100}%` }}></div>
+                   <input 
+                      type="range" min="0" max={productsMaxPrice} step="1"
+                      value={minPrice} 
+                      onChange={(e) => { const val = Math.min(Number(e.target.value), maxPrice - 10); setMinPrice(val); }}
+                      className="range-slider-input"
+                   />
+                   <input 
+                      type="range" min="0" max={productsMaxPrice} step="1"
+                      value={maxPrice} 
+                      onChange={(e) => { const val = Math.max(Number(e.target.value), minPrice + 10); setMaxPrice(val); }}
+                      className="range-slider-input"
+                   />
+                </div>
+              </div>
+
+              <div className="relative min-w-[160px] w-full sm:w-auto">
+                <select 
+                  value={sortOrder} 
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  className="w-full px-4 py-2.5 pr-8 rounded-xl border border-[#e7e5e4] text-sm focus:outline-none focus:ring-1 focus:ring-[#5c6b50] bg-[#fafaf9] text-[#44403c] appearance-none cursor-pointer"
+                >
+                  <option value="default">Domyślnie</option>
+                  <option value="asc">Cena: Rosnąco</option>
+                  <option value="desc">Cena: Malejąco</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-[#78716c]">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
               </div>
             </div>
-
           </div>
+
+          {currentFilterGroups.length > 0 && (
+             <div className="pt-6 border-t border-[#e5e5e0] grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
+               {currentFilterGroups.map((group, idx) => (
+                 <div key={idx} className="flex flex-col gap-2">
+                   <h4 className="text-xs font-bold uppercase tracking-widest text-[#a8a29e] mb-1">{group.label}</h4>
+                   <div className="flex flex-wrap gap-2">
+                     {group.tags.map(tag => (
+                       <button 
+                         key={tag.id} 
+                         onClick={() => toggleTag(tag.id)}
+                         className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all border ${selectedTags.includes(tag.id) ? 'bg-[#5c6b50] text-white border-[#5c6b50] shadow-sm' : 'bg-[#f5f5f4] text-[#78716c] border-[#e7e5e4] hover:bg-[#e7e5e4] hover:text-[#44403c]'}`}
+                       >
+                         {tag.label}
+                       </button>
+                     ))}
+                   </div>
+                 </div>
+               ))}
+             </div>
+          )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {filtered.map(p => (
-          <div key={p.id} className="bg-white rounded-2xl border border-[#e5e5e0] hover:border-[#d6d3d1] shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col overflow-hidden group">
-            <div 
-              className="overflow-hidden h-64 cursor-pointer bg-[#fafaf9] relative" 
-              onClick={() => onProductClick(p)}
-            >
-              <img src={p.image} className="w-full h-full object-cover group-hover:scale-105 transition duration-700 ease-in-out" alt={p.name} />
-            </div>
-            <div className="p-6 flex flex-col flex-1">
-                <p className="text-[#5c6b50] text-[10px] font-bold uppercase tracking-widest mb-1">{p.latin}</p>
-                <h3 className="font-bold text-lg text-[#44403c] cursor-pointer hover:text-[#5c6b50] transition-colors mb-2" onClick={() => onProductClick(p)}>{p.name}</h3>
-                <p className="text-[#78716c] text-sm mb-6 line-clamp-2 leading-relaxed">{p.desc}</p>
-                <div className="flex justify-between items-center mt-auto pt-4 border-t border-[#e5e5e0]">
-                <span className="text-xl font-bold text-[#44403c]">{p.price.toFixed(2)} <span className="text-sm font-normal text-[#a8a29e]">PLN</span></span>
-                <button onClick={() => addToCart(p)} className="bg-[#f5f5f4] text-[#44403c] p-3 rounded-xl hover:bg-[#57534e] hover:text-white transition-colors active:scale-95"><Icons.Plus/></button>
-                </div>
-            </div>
+        {paginatedProducts.length === 0 ? (
+          <div className="col-span-full text-center py-20 text-[#a8a29e]">
+            <p className="text-lg">Nie znaleziono produktów spełniających kryteria.</p>
+            <button onClick={() => { setCategory('all'); setSelectedTags([]); }} className="mt-4 text-[#5c6b50] font-bold hover:underline">Wyczyść filtry</button>
           </div>
-        ))}
+        ) : (
+          paginatedProducts.map(p => (
+            <div key={p.id} className="bg-white rounded-2xl border border-[#e5e5e0] hover:border-[#d6d3d1] shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col overflow-hidden group">
+              <div 
+                className="overflow-hidden h-64 cursor-pointer bg-[#fafaf9] relative" 
+                onClick={() => onProductClick(p)}
+              >
+                <img src={p.image} className="w-full h-full object-cover group-hover:scale-105 transition duration-700 ease-in-out" alt={p.name} />
+              </div>
+              <div className="p-6 flex flex-col flex-1">
+                  <p className="text-[#5c6b50] text-[10px] font-bold uppercase tracking-widest mb-1">{p.latin}</p>
+                  <h3 className="font-bold text-lg text-[#44403c] cursor-pointer hover:text-[#5c6b50] transition-colors mb-2" onClick={() => onProductClick(p)}>{p.name}</h3>
+                  <p className="text-[#78716c] text-sm mb-6 line-clamp-2 leading-relaxed">{p.desc}</p>
+                  <div className="flex justify-between items-center mt-auto pt-4 border-t border-[#e5e5e0]">
+                  <span className="text-xl font-bold text-[#44403c]">{p.price.toFixed(2)} <span className="text-sm font-normal text-[#a8a29e]">PLN</span></span>
+                  <button onClick={() => addToCart(p)} className="bg-[#f5f5f4] text-[#44403c] p-3 rounded-xl hover:bg-[#57534e] hover:text-white transition-colors active:scale-95"><Icons.Plus/></button>
+                  </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
+
+      {/* Kontrolki paginacji */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-12">
+            <button
+                onClick={() => {
+                    setCurrentPage(p => Math.max(1, p - 1));
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-[#e7e5e4] text-[#78716c] hover:bg-[#f5f5f4] hover:text-[#44403c] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+                <Icons.ChevronLeft className="w-5 h-5" />
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                 <button
+                    key={page}
+                    onClick={() => {
+                        setCurrentPage(page);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${currentPage === page ? 'bg-[#57534e] text-white shadow-md' : 'bg-white border border-[#e7e5e4] text-[#78716c] hover:bg-[#f5f5f4] hover:text-[#44403c]'}`}
+                 >
+                    {page}
+                 </button>
+            ))}
+
+            <button
+                onClick={() => {
+                    setCurrentPage(p => Math.min(totalPages, p + 1));
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-lg border border-[#e7e5e4] text-[#78716c] hover:bg-[#f5f5f4] hover:text-[#44403c] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+                <Icons.ChevronRight className="w-5 h-5" />
+            </button>
+        </div>
+      )}
     </div>
   );
 });
 
-// --- KOMPONENTY: REGULAMIN I POLITYKA ---
-
-const TermsView = memo(() => (
-  <div className="bg-white rounded-3xl border border-[#e5e5e0] p-8 md:p-16 animate-fade-in shadow-sm max-w-4xl mx-auto">
-    <div className="flex items-center gap-4 mb-8 border-b border-[#e5e5e0] pb-6">
-      <div className="p-3 bg-[#f5f5f0] rounded-xl text-[#5c6b50]"><Icons.FileText className="w-6 h-6" /></div>
-      <h2 className="text-2xl font-bold text-[#44403c]">Regulamin Sklepu</h2>
-    </div>
-    <div className="prose prose-stone max-w-none text-[#78716c] leading-relaxed space-y-8 text-sm font-light">
-      
-      <section>
-        <h3 className="font-bold text-[#44403c] text-base mb-3">I. Postanowienia ogólne</h3>
-        <p>Niniejszy Regulamin określa ogólne warunki, sposób świadczenia Usług drogą elektroniczną i sprzedaży prowadzonej za pośrednictwem Sklepu Internetowego www.spiderra.netlify.app. Sklep prowadzi {COMPANY_DATA.name}, wpisany do rejestru przedsiębiorców Centralnej Ewidencji i Informacji o Działalności Gospodarczej prowadzonej przez ministra właściwego ds. gospodarki pod adresem {COMPANY_DATA.address}, {COMPANY_DATA.zip} {COMPANY_DATA.city}, NIP {COMPANY_DATA.nip}, REGON {COMPANY_DATA.regon}, zwany dalej Sprzedawcą.</p>
-        <p className="mt-2">Kontakt ze Sprzedawcą odbywa się poprzez:</p>
-        <ul className="list-disc pl-5 mt-1 space-y-1 marker:text-[#5c6b50]">
-          <li>adres poczty elektronicznej: {COMPANY_DATA.email};</li>
-          <li>pod numerem telefonu: {COMPANY_DATA.phone};</li>
-          <li>formularz kontaktowy dostępny na stronach Sklepu Internetowego.</li>
-        </ul>
-        <p className="mt-2">Niniejszy Regulamin jest nieprzerwanie dostępny w witrynie internetowej, w sposób umożliwiający jego pozyskanie, odtwarzanie i utrwalanie jego treści poprzez wydrukowanie lub zapisanie na nośniku w każdej chwili.</p>
-        <p className="mt-2">Sprzedawca informuje, że korzystanie z Usług świadczonych drogą elektroniczną może wiązać się z zagrożeniem po stronie każdego użytkownika sieci Internet, polegającym na możliwości wprowadzenia do systemu teleinformatycznego Klienta szkodliwego oprogramowania oraz pozyskania i modyfikacji jego danych przez osoby nieuprawnione. By uniknąć ryzyka wystąpienia zagrożeń w/w Klient powinien stosować właściwe środki techniczne, które zminimalizują ich wystąpienie, a w szczególności programy antywirusowe i zaporę sieciową typu firewall.</p>
-      </section>
-
-      {/* ... reszta regulaminu ... */}
-      <section>
-        <h3 className="font-bold text-[#44403c] text-base mb-3">XIV. Postanowienia końcowe</h3>
-        <p>Wszelkie prawa do Sklepu Internetowego, w tym majątkowe prawa autorskie, prawa własności intelektualnej do jego nazwy, domeny internetowej, strony internetowej Sklepu Internetowego, a także do formularzy, logotypów należą do Sprzedawcy.</p>
-        <p>W sprawach nieuregulowanych w niniejszym Regulaminie mają zastosowanie przepisy Kodeksu Cywilnego, przepisy Ustawy o świadczeniu usług drogą elektroniczną, przepisy Ustawy o prawach Konsumenta oraz inne właściwe przepisy prawa polskiego.</p>
-      </section>
-
-    </div>
-  </div>
-));
-
-const PrivacyView = memo(() => (
-  <div className="bg-white rounded-3xl border border-[#e5e5e0] p-8 md:p-16 animate-fade-in shadow-sm max-w-4xl mx-auto">
-    <div className="flex items-center gap-4 mb-8 border-b border-[#e5e5e0] pb-6">
-      <div className="p-3 bg-[#f5f5f0] rounded-xl text-[#5c6b50]"><Icons.Lock className="w-6 h-6" /></div>
-      <h2 className="text-2xl font-bold text-[#44403c]">Polityka Prywatności</h2>
-    </div>
-    <div className="prose prose-stone max-w-none text-[#78716c] leading-relaxed space-y-8 text-sm font-light">
-      <section>
-        <h3 className="font-bold text-[#44403c] text-base mb-3">CZYM JEST POLITYKA PRYWATNOŚCI?</h3>
-        <p>Chcielibyśmy zapoznać Cię ze szczegółami przetwarzania przez nas Twoich danych osobowych, aby dać Ci pełną wiedzę i komfort w korzystaniu z naszej strony internetowej.</p>
-        <p className="mt-2">W związku z tym, że sami działamy w branży internetowej, wiemy jak ważna jest ochrona Twoich danych osobowych. Dlatego dokładamy szczególnych starań, aby chronić Twoją prywatność i informacje, które nam przekazujesz.</p>
-        <p className="mt-4 font-bold text-[#44403c]">Kto jest administratorem strony internetowej?</p>
-        <p>Administratorem strony internetowej jest {COMPANY_DATA.name}, wpisany do rejestru przedsiębiorców Centralnej Ewidencji i Informacji o Działalności Gospodarczej prowadzonej przez ministra właściwego ds. gospodarki pod adresem {COMPANY_DATA.address}, {COMPANY_DATA.zip} {COMPANY_DATA.city}, NIP {COMPANY_DATA.nip}, REGON {COMPANY_DATA.regon} (czyli: my).</p>
-      </section>
-      {/* ... reszta polityki ... */}
-    </div>
-  </div>
-));
-
 // --- GŁÓWNA APLIKACJA ---
-
 export default function App() {
   const [activeView, setActiveView] = useState('home');
   const [products, setProducts] = useState([]);
@@ -640,6 +1021,7 @@ export default function App() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: 'sans-serif', backgroundColor: '#faf9f6' }}>
         <img src={LOGO_URL} alt="Spiderra" style={{ height: '80px', width: 'auto' }} />
+        <div style={{ marginTop: '12px', color: '#9ca3af', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '2px' }}>Ładowanie stylów...</div>
       </div>
     );
   }
@@ -695,19 +1077,22 @@ export default function App() {
 
       {/* Widok Główny */}
       <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 min-h-[85vh]">
-        {activeView === 'home' && <HomeView navigateTo={navigate} />}
+        {/* Renderowanie widoków */}
+        {activeView === 'home' && <HomeView navigateTo={navigate} products={products} onProductClick={openProductDetails} addToCart={addToCart} />}
         {activeView === 'about' && <AboutView />}
         {activeView === 'stream' && <StreamView />}
         {activeView === 'terms' && <TermsView />}
         {activeView === 'privacy' && <PrivacyView />}
         {activeView === 'success' && <SuccessView lastOrder={lastOrder} />}
         
+        {/* Logika dla widoku sklepu i szczegółów produktu */}
         {activeView === 'shop' && (
           selectedProduct ? (
             <ProductDetailsView 
               product={selectedProduct} 
               onBack={closeProductDetails} 
               onAddToCart={(p) => { addToCart(p); }} 
+              allProducts={products}
             />
           ) : (
             <ShopView 
@@ -720,7 +1105,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Koszyk Panel */}
+      {/* Koszyk Panel - reszta bez zmian */}
       {isCartOpen && (
         <div className="fixed inset-0 z-[100] flex justify-end">
           <div className="absolute inset-0 bg-[#292524]/40 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)}></div>
@@ -780,9 +1165,9 @@ export default function App() {
                 <img src={LOGO_URL} alt="Spiderra" className="h-10 w-auto object-contain grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition-all duration-500" />
               </div>
               <div className="flex gap-3">
-                <button className="w-10 h-10 bg-[#f5f5f4] rounded-full flex items-center justify-center text-[#a8a29e] hover:bg-[#e7e5e4] hover:text-[#44403c] transition-all"><Icons.Instagram className="w-5 h-5"/></button>
-                <button className="w-10 h-10 bg-[#f5f5f4] rounded-full flex items-center justify-center text-[#a8a29e] hover:bg-[#e7e5e4] hover:text-[#44403c] transition-all"><Icons.TikTok className="w-5 h-5"/></button>
-                <button className="w-10 h-10 bg-[#f5f5f4] rounded-full flex items-center justify-center text-[#a8a29e] hover:bg-[#e7e5e4] hover:text-[#44403c] transition-all"><Icons.Kick className="w-5 h-5"/></button>
+                <a href="https://www.instagram.com/spiderra.pl/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-[#f5f5f4] rounded-full flex items-center justify-center text-[#a8a29e] hover:bg-[#e7e5e4] hover:text-[#44403c] transition-all"><Icons.Instagram className="w-5 h-5"/></a>
+                <a href="https://www.tiktok.com/@spiderra.pl" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-[#f5f5f4] rounded-full flex items-center justify-center text-[#a8a29e] hover:bg-[#e7e5e4] hover:text-[#44403c] transition-all"><Icons.TikTok className="w-5 h-5"/></a>
+                <a href="https://kick.com/spiderra" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-[#f5f5f4] rounded-full flex items-center justify-center text-[#a8a29e] hover:bg-[#e7e5e4] hover:text-[#44403c] transition-all"><Icons.Kick className="w-5 h-5"/></a>
               </div>
             </div>
 
@@ -817,8 +1202,7 @@ export default function App() {
           </div>
           
           <div className="pt-8 border-t border-[#e7e5e4] flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold text-[#d6d3d1] tracking-widest uppercase">
-            <p>&copy; {new Date().getFullYear()} Spiderra Lab. Wszystkie prawa zastrzeżone.</p>
-            <p className="opacity-50">Design & Code for Arek</p>
+            <p>&copy; {new Date().getFullYear()} Spiderra. Wszystkie prawa zastrzeżone.</p>
           </div>
         </div>
       </footer>
