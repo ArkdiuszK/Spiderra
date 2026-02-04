@@ -31,6 +31,9 @@ exports.handler = async (event, context) => {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card', 'blik'],
       
+      // Wymuszenie języka polskiego w interfejsie płatności
+      locale: 'pl',
+
       // --- DANE DO WYSYŁKI ---
       shipping_address_collection: {
         allowed_countries: ['PL'], 
@@ -38,11 +41,10 @@ exports.handler = async (event, context) => {
       phone_number_collection: {
         enabled: true,
       },
-      // Zbieranie adresu do faktury
+      // Zbieranie adresu do faktury (required wymusza pełny adres billingowy)
       billing_address_collection: 'required',
 
-      // --- NOWOŚĆ: AUTOMATYCZNE GENEROWANIE FAKTURY/PARAGONU ---
-      // Dzięki temu Stripe wie, że ma wysłać e-mail z potwierdzeniem (jeśli włączyłeś to w panelu)
+      // Automatyczne fakturowanie
       invoice_creation: {
         enabled: true,
       },
@@ -67,24 +69,39 @@ exports.handler = async (event, context) => {
             display_name: 'Kurier Inpost',
             delivery_estimate: {
               minimum: { unit: 'business_day', value: 1 },
-              maximum: { unit: 'business_day', value: 3 },
+              maximum: { unit: 'business_day', value: 2 },
             },
           },
         },
-        
       ],
       
-      line_items: items.map(item => ({
-        price_data: {
-          currency: 'pln',
-          product_data: {
-            name: item.name,
-            images: [item.image],
-          },
-          unit_amount: Math.round(item.price * 100),
-        },
-        quantity: item.qty,
-      })),
+      // --- KLUCZOWA ZMIANA: OBSŁUGA WARIANTÓW (PRICE ID) ---
+      line_items: items.map(item => {
+        // SPRAWDZENIE: Czy przedmiot ma nadane ID ceny ze Stripe (np. wariant)?
+        if (item.stripeId && item.stripeId.startsWith('price_')) {
+            return {
+                price: item.stripeId,
+                quantity: item.qty,
+            };
+        } 
+        
+        // FALLBACK: Jeśli nie ma ID (np. zwykły produkt), tworzymy cenę dynamicznie
+        return {
+            price_data: {
+              currency: 'pln',
+              product_data: {
+                name: item.name,
+                images: item.image ? [item.image] : [],
+                metadata: {
+                    latin_name: item.latin || ''
+                }
+              },
+              unit_amount: Math.round(item.price * 100),
+            },
+            quantity: item.qty,
+        };
+      }),
+
       mode: 'payment',
       success_url: `${origin}/?success=true`,
       cancel_url: `${origin}/?canceled=true`,
