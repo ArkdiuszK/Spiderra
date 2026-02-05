@@ -19,7 +19,6 @@ const COMPANY_DATA = {
 
 // --- KONFIGURACJA ZDJĘĆ ---
 const LOGO_URL = "/zdjecia/logo.png"; 
-const LOGO_URL2 = "/zdjecia/logo2.png"; 
 const HERO_IMAGE_URL = "/zdjecia/tlo.jpg"; 
 
 // --- DEFINICJA KATEGORII I GRUP FILTRÓW ---
@@ -43,6 +42,7 @@ const PRODUCT_CATEGORIES = [
           { id: 'terrestrial', label: 'Naziemne' },
           { id: 'arboreal', label: 'Nadrzewne' },
           { id: 'fossorial', label: 'Podziemne' },
+          { id: 'dwarf', label: 'Karłowate' },
           { id: 'rare', label: 'Rzadkie' },
           { id: 'bestseller', label: 'Bestsellery' }
         ]
@@ -56,6 +56,7 @@ const PRODUCT_CATEGORIES = [
       {
         label: "Kategorie",
         tags: [
+          { id: 'terrarium', label: 'Terraria' },
           { id: 'container', label: 'Pojemniki hodowlane' },
           { id: 'substrate', label: 'Podłoże' },
           { id: 'tools', label: 'Narzędzia' },
@@ -66,6 +67,57 @@ const PRODUCT_CATEGORIES = [
     ]
   }
 ];
+
+// --- ERROR BOUNDARY (Ochrona przed awarią całej strony) ---
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#faf9f6] text-[#44403c] p-4">
+          <h1 className="text-3xl font-bold mb-4">Ups! Coś poszło nie tak.</h1>
+          <p className="mb-6 text-[#78716c]">Wystąpił błąd podczas ładowania aplikacji. Spróbuj odświeżyć stronę.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-6 py-3 bg-[#57534e] text-white rounded-xl hover:bg-[#44403c] transition-colors shadow-lg"
+          >
+            Odśwież stronę
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children; 
+  }
+}
+
+// --- POMOCNIK SEO ---
+const SEO = ({ title, description }) => {
+  useEffect(() => {
+    document.title = title ? `${title} | Spiderra` : "Spiderra - Sklep z Ptaszniki i Akcesoriami";
+    let metaDesc = document.querySelector("meta[name='description']");
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.content = description || "Sklep z ptasznikami i akcesoriami hodowlanymi.";
+  }, [title, description]);
+
+  return null;
+};
 
 // --- PRZYŚPIESZONE ŁADOWANIE TAILWINDA ---
 const injectTailwind = () => {
@@ -162,8 +214,7 @@ const Icons = {
   Loader: (p) => <IconBase {...p} className={`animate-spin ${p.className}`}><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></IconBase>
 };
 
-// --- DANE PRODUKTÓW (Z MOCKOWYMI WARIANTAMI - WAŻNE!) ---
-// Uzupełniłem warianty zgodnie z Twoim zdjęciem z panelu Stripe
+// --- DANE PRODUKTÓW (MOCK) ---
 const MOCK_PRODUCTS_DATA = [
   { 
     id: 'spider1', 
@@ -190,12 +241,11 @@ const MOCK_PRODUCTS_DATA = [
     name: 'Theraphosa stirmi', 
     latin: 'Theraphosa stirmi', 
     type: 'spider', 
-    tags: ['terrestrial', 'advanced', 'rare'], 
+    tags: ['terrestrial', 'advanced', 'rare', 'sold_out'], 
     price: 450.00, 
     image: 'https://placehold.co/400x300/e2e8f0/991b1b?text=Stirmi', 
     desc: 'Jeden z największych pająków świata. Wymaga doświadczenia w utrzymaniu odpowiedniej wilgotności.' 
   },
-  // --- ZESTAWY HODOWLANE Z WARIANTAMI ---
   { 
     id: 'kit_s', 
     name: 'Zestaw S "Plecak" | Dla małych ptaszników', 
@@ -203,13 +253,12 @@ const MOCK_PRODUCTS_DATA = [
     type: 'gear', 
     tags: ['container', 'bestseller'], 
     price: 11.99, 
-    image: 'https://placehold.co/400x300/f1f5f9/64748b?text=Zestaw+S', // Tu możesz podmienić na swoje zdjęcie breeding boxa
-    // Poniżej nowy, dopasowany opis:
+    image: 'https://placehold.co/400x300/f1f5f9/64748b?text=Zestaw+S', 
     desc: 'Najlepszy start dla malucha (L1-L3). W skład zestawu wchodzi profesjonalny pojemnik hodowlany typu Breeding Box (5x5x7cm) z bezpieczną klapką "feeding hatch", która ułatwia karmienie bez ryzyka ucieczki pająka. Krystalicznie przejrzyste ścianki pozwalają na doskonałą obserwację, a precyzyjna boczna wentylacja zapewnia zdrowy przepływ powietrza. To nie jest zwykłe pudełko – to bezpieczny azyl dla Twojego nowego podopiecznego.',
     variants: [
-      { id: 'eco', name: 'Economy', price: 11.99, desc: 'Pojemnik + Torf', stripeId: 'price_1Qnm...' }, // Pamiętaj o wklejeniu ID ze Stripe
-      { id: 'biz', name: 'Business', price: 14.99, desc: 'Pojemnik + Torf + Kora', stripeId: 'price_1Qnm...' },
-      { id: 'first', name: 'First Class', price: 17.99, desc: 'Premium + Mech + Ozdoby', stripeId: 'price_1Qnm...' }
+      { id: 'eco', name: 'Economy', price: 11.99, desc: 'Pojemnik + Torf', stripeId: 'price_PLACEHOLDER_ECO_S' }, 
+      { id: 'biz', name: 'Business', price: 14.99, desc: 'Pojemnik + Torf + Kora', stripeId: 'price_PLACEHOLDER_BIZ_S' },
+      { id: 'first', name: 'First Class', price: 17.99, desc: 'Premium + Mech + Ozdoby', stripeId: 'price_PLACEHOLDER_FIRST_S' }
     ]
   },
   { 
@@ -252,7 +301,9 @@ const useCart = () => {
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
 
   const showToast = useCallback((message, type = 'success') => {
-    setToast({ visible: true, message, type });
+    // Zabezpieczenie przed obiektami w message
+    const msgString = typeof message === 'string' ? message : 'Wystąpił błąd.';
+    setToast({ visible: true, message: msgString, type });
     setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 4000);
   }, []);
 
@@ -277,7 +328,7 @@ const useCart = () => {
   return { cart, setCart, isCartOpen, setIsCartOpen, toast, addToCart, removeFromCart, updateQty, cartTotal, cartCount, showToast };
 };
 
-// --- WIDOKI ---
+// --- WIDOKI (DEFINIOWANE PRZED APP) ---
 
 const SuccessView = memo(({ lastOrder }) => {
   if (!lastOrder) return null;
@@ -298,7 +349,7 @@ const SuccessView = memo(({ lastOrder }) => {
             <div key={idx} className="flex justify-between items-center text-sm">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-white rounded-lg overflow-hidden border border-[#e5e5e0]">
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" loading="lazy" decoding="async"/>
                 </div>
                 <div>
                   <p className="font-bold text-[#44403c]">{item.name}</p>
@@ -323,7 +374,6 @@ const SuccessView = memo(({ lastOrder }) => {
   );
 });
 
-// --- KOMPONENT: Bestseller Slider ---
 const BestsellerSlider = memo(({ products, onProductClick, addToCart }) => {
   const scrollRef = useRef(null);
    
@@ -364,7 +414,7 @@ const BestsellerSlider = memo(({ products, onProductClick, addToCart }) => {
             onClick={() => onProductClick(product)}
           >
             <div className="h-48 overflow-hidden rounded-t-2xl bg-[#fafaf9] relative">
-              <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+              <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" decoding="async"/>
               <div className="absolute top-3 left-3 bg-[#5c6b50] text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider shadow-sm">
                 Top
               </div>
@@ -392,7 +442,6 @@ const BestsellerSlider = memo(({ products, onProductClick, addToCart }) => {
   );
 });
 
-// --- KOMPONENT: TRAVEL GALLERY ---
 const TravelGallery = memo(({ navigateTo }) => {
   const photos = [
     { id: 1, src: "/zdjecia/cypr.jpg", location: "Cypr", desc: "Tarantula w naturze" },
@@ -414,7 +463,7 @@ const TravelGallery = memo(({ navigateTo }) => {
           <h3 className="text-3xl md:text-4xl font-bold text-[#44403c]">Z Dziennika Podróży</h3>
         </div>
         <p className="text-[#78716c] text-sm max-w-md text-right md:text-left font-light leading-relaxed">
-          A oto miejsca, które już odwiedziłem...
+          Nie jestem tylko sprzedawcą – jestem badaczem. Zobacz, jak wyglądają naturalne siedliska pająków, które oferuję.
         </p>
       </div>
 
@@ -426,7 +475,7 @@ const TravelGallery = memo(({ navigateTo }) => {
               index === 0 ? 'md:col-span-2 md:row-span-2' : 'md:col-span-1'
             }`}
           >
-            <img src={photo.src} alt={photo.location} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+            <img src={photo.src} alt={photo.location} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" loading="lazy" decoding="async"/>
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
               <p className="text-white font-bold text-lg">{photo.location}</p>
               {index === 0 && <p className="text-stone-300 text-sm mt-1">{photo.desc}</p>}
@@ -451,14 +500,13 @@ const TravelGallery = memo(({ navigateTo }) => {
   );
 });
 
-// --- Produkt Details (z POPRAWNĄ Obsługą Wariantów) ---
 const ProductDetailsView = memo(({ product, onBack, onAddToCart, allProducts }) => {
-  // Stan dla wybranego wariantu (domyślnie pierwszy, jeśli istnieją warianty)
+  const isSoldOut = product.tags && product.tags.includes('sold_out');
+
   const [selectedVariant, setSelectedVariant] = useState(
     (product.variants && product.variants.length > 0) ? product.variants[0] : null
   );
 
-  // Resetujemy wybór przy zmianie produktu
   useEffect(() => {
     if(product.variants && product.variants.length > 0) {
         setSelectedVariant(product.variants[0]);
@@ -468,11 +516,12 @@ const ProductDetailsView = memo(({ product, onBack, onAddToCart, allProducts }) 
   }, [product]);
 
   const handleAddToCart = () => {
+    if (isSoldOut) return;
+
     if (selectedVariant) {
-      // Tworzymy unikalny produkt wariantowy - CZYSTY OBIEKT DO KOSZYKA (BEZ OPISU)
       const variantProduct = {
         id: `${product.id}-${selectedVariant.id}`, 
-        name: `${product.name} - ${selectedVariant.name}`, // Wyraźna nazwa wariantu
+        name: `${product.name} - ${selectedVariant.name}`,
         price: selectedVariant.price,
         image: product.image,
         latin: product.latin,
@@ -481,14 +530,12 @@ const ProductDetailsView = memo(({ product, onBack, onAddToCart, allProducts }) 
       };
       onAddToCart(variantProduct);
     } else {
-      // Dla zwykłych produktów też usuwamy opis z obiektu koszyka
       const cleanProduct = {
         id: product.id,
         name: product.name,
         price: product.price,
         image: product.image,
         latin: product.latin,
-        // brak pola desc
       };
       onAddToCart(cleanProduct);
     }
@@ -504,8 +551,6 @@ const ProductDetailsView = memo(({ product, onBack, onAddToCart, allProducts }) 
   }, [product, allProducts]);
 
   const currentPrice = selectedVariant ? selectedVariant.price : product.price;
-  
-  // ZMIANA: Pokazuj wybór tylko jeśli jest więcej niż 1 opcja
   const showVariantSelector = product.variants && product.variants.length > 1;
 
   return (
@@ -516,8 +561,16 @@ const ProductDetailsView = memo(({ product, onBack, onAddToCart, allProducts }) 
         </button>
         <div className="flex flex-col md:flex-row gap-12">
           <div className="w-full md:w-1/2">
-            <div className="aspect-square rounded-3xl overflow-hidden bg-[#fafaf9] shadow-sm border border-[#e7e5e4]">
-              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+            <div className="aspect-square rounded-3xl overflow-hidden bg-[#fafaf9] shadow-sm border border-[#e7e5e4] relative">
+              <img src={product.image} alt={product.name} className={`w-full h-full object-cover ${isSoldOut ? 'grayscale opacity-70' : ''}`} loading="eager" />
+              
+              {isSoldOut && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                    <div className="bg-[#44403c] text-white px-6 py-2 rounded-xl font-bold text-lg shadow-lg rotate-[-5deg] border-2 border-white">
+                        WYPRZEDANE
+                    </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="w-full md:w-1/2 flex flex-col">
@@ -532,10 +585,8 @@ const ProductDetailsView = memo(({ product, onBack, onAddToCart, allProducts }) 
                 <p>{product.desc || "Brak szczegółowego opisu dla tego produktu."}</p>
               </div>
 
-              {/* SEKCJA WYBORU WARIANTU - ZMODYFIKOWANA */}
-              {/* Wyświetla się TYLKO jeśli jest więcej niż 1 wariant (czyli zestawy) */}
               {showVariantSelector && (
-                <div className="mb-8 p-4 bg-[#fafaf9] rounded-2xl border border-[#e7e5e4]">
+                <div className={`mb-8 p-4 bg-[#fafaf9] rounded-2xl border border-[#e7e5e4] ${isSoldOut ? 'opacity-50 pointer-events-none' : ''}`}>
                   <p className="text-xs font-bold uppercase tracking-widest text-[#a8a29e] mb-3">Wybierz wersję:</p>
                   <div className="space-y-3">
                     {product.variants.map((variant) => (
@@ -562,7 +613,10 @@ const ProductDetailsView = memo(({ product, onBack, onAddToCart, allProducts }) 
               )}
 
               <div className="mt-6 flex flex-col gap-2 text-sm text-[#78716c]">
-                 <p><span className="font-semibold text-[#44403c]">Dostępność:</span> W magazynie</p>
+                 <p>
+                    <span className="font-semibold text-[#44403c]">Dostępność:</span>{' '}
+                    {isSoldOut ? <span className="text-red-600 font-bold">Wyprzedane</span> : <span className="text-emerald-600">W magazynie</span>}
+                 </p>
                  <p><span className="font-semibold text-[#44403c]">Wysyłka:</span> 24h (Dni robocze)</p>
               </div>
             </div>
@@ -570,11 +624,21 @@ const ProductDetailsView = memo(({ product, onBack, onAddToCart, allProducts }) 
             <div className="mt-auto pt-8 border-t border-[#e5e5e0]">
               <button 
                 onClick={handleAddToCart} 
-                className="w-full py-4 bg-[#57534e] text-white rounded-xl font-bold text-lg hover:bg-[#44403c] transition-all shadow-md flex items-center justify-center gap-3 active:scale-[0.98]"
+                disabled={isSoldOut}
+                className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-md flex items-center justify-center gap-3 active:scale-[0.98] ${
+                    isSoldOut 
+                    ? 'bg-[#e7e5e4] text-[#a8a29e] cursor-not-allowed shadow-none' 
+                    : 'bg-[#57534e] text-white hover:bg-[#44403c]'
+                }`}
               >
-                <Icons.Plus className="w-6 h-6" /> 
-                {/* Zmiana tekstu przycisku: jeśli jest wybór wariantów, pokaż nazwę, jeśli nie - standardowy tekst */}
-                {showVariantSelector ? `Dodaj wariant ${selectedVariant ? selectedVariant.name : ''}` : 'Dodaj do koszyka'}
+                {isSoldOut ? (
+                    'Produkt niedostępny'
+                ) : (
+                    <>
+                        <Icons.Plus className="w-6 h-6" /> 
+                        {showVariantSelector ? `Dodaj wariant ${selectedVariant ? selectedVariant.name : ''}` : 'Dodaj do koszyka'}
+                    </>
+                )}
               </button>
             </div>
           </div>
@@ -588,7 +652,7 @@ const ProductDetailsView = memo(({ product, onBack, onAddToCart, allProducts }) 
               {relatedProducts.map(rp => (
                 <div key={rp.id} className="bg-white rounded-2xl border border-[#e5e5e0] p-4 flex flex-col hover:border-[#d6d3d1] transition-all shadow-sm hover:shadow-md">
                    <div className="h-40 bg-[#fafaf9] rounded-xl overflow-hidden mb-4 relative">
-                      <img src={rp.image} alt={rp.name} className="w-full h-full object-cover" />
+                      <img src={rp.image} alt={rp.name} className="w-full h-full object-cover" loading="lazy" decoding="async"/>
                       <button onClick={() => onAddToCart(rp)} className="absolute bottom-2 right-2 bg-white p-2 rounded-lg shadow-sm text-[#44403c] hover:bg-[#57534e] hover:text-white transition-colors">
                         <Icons.Plus className="w-5 h-5" />
                       </button>
@@ -605,13 +669,12 @@ const ProductDetailsView = memo(({ product, onBack, onAddToCart, allProducts }) 
   );
 });
 
-// --- HOME VIEW ---
 const HomeView = memo(({ navigateTo, products, onProductClick, addToCart }) => (
   <div className="animate-fade-in space-y-16 pb-12">
     <div className={`relative min-h-[70vh] flex items-center justify-center overflow-hidden rounded-3xl border border-[#e7e5e4] ${HERO_IMAGE_URL ? '' : 'bg-[#fafaf9]'}`}>
       {HERO_IMAGE_URL ? (
         <>
-          <img src={HERO_IMAGE_URL} alt="Background" className="absolute inset-0 w-full h-full object-cover" />
+          <img src={HERO_IMAGE_URL} alt="Background" className="absolute inset-0 w-full h-full object-cover" loading="eager" />
           <div className="absolute inset-0 bg-[#faf9f6]/50 backdrop-blur-s"></div>
         </>
       ) : (
@@ -644,14 +707,18 @@ const HomeView = memo(({ navigateTo, products, onProductClick, addToCart }) => (
   </div>
 ));
 
-// --- SHOP VIEW ---
 const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
   const [category, setCategory] = useState('all');
   const [selectedTags, setSelectedTags] = useState([]); 
-  const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(1000);
+  const [minPrice, setMinPrice] = useState(0); // Wartość filtrowania (aktualizowana z opóźnieniem)
+  const [maxPrice, setMaxPrice] = useState(1000); // Wartość filtrowania
   const [sortOrder, setSortOrder] = useState('default');
   const [currentPage, setCurrentPage] = useState(1); 
+  
+  // --- LOCAL STATE DLA SUWAKÓW (PŁYNNOŚĆ) ---
+  const [localMinPrice, setLocalMinPrice] = useState(0);
+  const [localMaxPrice, setLocalMaxPrice] = useState(1000);
+
   const ITEMS_PER_PAGE = 9;
 
   const handleCategoryChange = (newCategory) => {
@@ -675,11 +742,23 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
     return Math.max(...products.map(p => p.price));
   }, [products]);
 
+  // Inicjalizacja suwaków
   useEffect(() => {
     if (products.length > 0) {
         setMaxPrice(productsMaxPrice);
+        setLocalMaxPrice(productsMaxPrice);
     }
   }, [productsMaxPrice, products]);
+
+  // Debouncing suwaka (filtrowanie po 300ms bezczynności)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+        setMinPrice(localMinPrice);
+        setMaxPrice(localMaxPrice);
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [localMinPrice, localMaxPrice]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -702,7 +781,6 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
                   .filter(id => selectedTags.includes(id));
                  
                 if (selectedInGroup.length === 0) return true;
-                // Bezpieczne sprawdzanie: p.tags musi być tablicą
                 return p.tags && Array.isArray(p.tags) && selectedInGroup.some(tag => p.tags.includes(tag));
             });
          });
@@ -715,6 +793,10 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
       result = [...result].sort((a, b) => a.price - b.price);
     } else if (sortOrder === 'desc') {
       result = [...result].sort((a, b) => b.price - a.price);
+    } else if (sortOrder === 'az') {
+      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortOrder === 'za') {
+      result = [...result].sort((a, b) => b.name.localeCompare(a.name));
     }
 
     return result;
@@ -741,7 +823,6 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
   return (
     <div className="animate-fade-in">
        
-      {/* --- SUWAK I FILTRY CSS --- */}
       <style>{`
         .range-slider-container { position: relative; width: 100%; height: 24px; }
         .range-slider-input {
@@ -769,7 +850,6 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
       {/* Panel Filtrów */}
       <div className="mb-10 bg-white p-6 rounded-2xl border border-[#e5e5e0] shadow-sm">
         <div className="flex flex-col gap-6">
-          {/* ... (górna część filtrów bez zmian) ... */}
           <div className="flex flex-col lg:flex-row gap-8 justify-between items-start lg:items-center">
             <div className="flex flex-wrap gap-3">
               {PRODUCT_CATEGORIES.map(f => (
@@ -786,30 +866,30 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
             <div className="flex flex-col sm:flex-row gap-8 w-full lg:w-auto items-center">
               <div className="flex flex-col gap-2 min-w-[240px] w-full sm:w-auto">
                 <div className="flex justify-between text-xs text-[#78716c] font-medium font-mono">
-                    <span>{minPrice} zł</span>
-                    <span>{maxPrice} zł</span>
+                    <span>{localMinPrice} zł</span>
+                    <span>{localMaxPrice} zł</span>
                 </div>
                 <div className="range-slider-container">
                     <div className="range-track"></div>
                     <div 
                       className="range-track-active"
                       style={{
-                          left: `${(minPrice / productsMaxPrice) * 100}%`,
-                          width: `${((maxPrice - minPrice) / productsMaxPrice) * 100}%`
+                          left: `${(localMinPrice / productsMaxPrice) * 100}%`,
+                          width: `${((localMaxPrice - localMinPrice) / productsMaxPrice) * 100}%`
                       }}
                     ></div>
-                    <div className="range-thumb" style={{ left: `${(minPrice / productsMaxPrice) * 100}%` }}></div>
-                    <div className="range-thumb" style={{ left: `${(maxPrice / productsMaxPrice) * 100}%` }}></div>
+                    <div className="range-thumb" style={{ left: `${(localMinPrice / productsMaxPrice) * 100}%` }}></div>
+                    <div className="range-thumb" style={{ left: `${(localMaxPrice / productsMaxPrice) * 100}%` }}></div>
                     <input 
                       type="range" min="0" max={productsMaxPrice} step="1"
-                      value={minPrice} 
-                      onChange={(e) => { const val = Math.min(Number(e.target.value), maxPrice - 10); setMinPrice(val); }}
+                      value={localMinPrice} 
+                      onChange={(e) => { const val = Math.min(Number(e.target.value), localMaxPrice - 10); setLocalMinPrice(val); }}
                       className="range-slider-input"
                     />
                     <input 
                       type="range" min="0" max={productsMaxPrice} step="1"
-                      value={maxPrice} 
-                      onChange={(e) => { const val = Math.max(Number(e.target.value), minPrice + 10); setMaxPrice(val); }}
+                      value={localMaxPrice} 
+                      onChange={(e) => { const val = Math.max(Number(e.target.value), localMinPrice + 10); setLocalMaxPrice(val); }}
                       className="range-slider-input"
                     />
                 </div>
@@ -824,6 +904,8 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
                   <option value="default">Domyślnie</option>
                   <option value="asc">Cena: Rosnąco</option>
                   <option value="desc">Cena: Malejąco</option>
+                  <option value="az">Nazwa: A-Z</option>
+                  <option value="za">Nazwa: Z-A</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-[#78716c]">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -862,25 +944,42 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
             <button onClick={() => { setCategory('all'); setSelectedTags([]); }} className="mt-4 text-[#5c6b50] font-bold hover:underline">Wyczyść filtry</button>
           </div>
         ) : (
-          paginatedProducts.map(p => (
-            <div key={p.id} className="bg-white rounded-2xl border border-[#e5e5e0] hover:border-[#d6d3d1] shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col overflow-hidden group">
-              <div 
-                className="overflow-hidden h-64 cursor-pointer bg-[#fafaf9] relative" 
-                onClick={() => onProductClick(p)}
-              >
-                <img src={p.image} className="w-full h-full object-cover group-hover:scale-105 transition duration-700 ease-in-out" alt={p.name} />
-              </div>
-              <div className="p-6 flex flex-col flex-1">
-                  <p className="text-[#5c6b50] text-[10px] font-bold uppercase tracking-widest mb-1">{p.latin}</p>
-                  <h3 className="font-bold text-lg text-[#44403c] cursor-pointer hover:text-[#5c6b50] transition-colors mb-2" onClick={() => onProductClick(p)}>{p.name}</h3>
-                  <p className="text-[#78716c] text-sm mb-6 line-clamp-2 leading-relaxed">{p.desc}</p>
-                  <div className="flex justify-between items-center mt-auto pt-4 border-t border-[#e5e5e0]">
-                  <span className="text-xl font-bold text-[#44403c]">{p.price.toFixed(2)} <span className="text-sm font-normal text-[#a8a29e]">PLN</span></span>
-                  <button onClick={() => addToCart(p)} className="bg-[#f5f5f4] text-[#44403c] p-3 rounded-xl hover:bg-[#57534e] hover:text-white transition-colors active:scale-95"><Icons.Plus/></button>
+          paginatedProducts.map(p => {
+            const isSoldOutList = p.tags && p.tags.includes('sold_out');
+            
+            return (
+                <div key={p.id} className="bg-white rounded-2xl border border-[#e5e5e0] hover:border-[#d6d3d1] shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col overflow-hidden group">
+                  <div 
+                    className="overflow-hidden h-64 cursor-pointer bg-[#fafaf9] relative" 
+                    onClick={() => onProductClick(p)}
+                  >
+                    <img src={p.image} className={`w-full h-full object-cover group-hover:scale-105 transition duration-700 ease-in-out ${isSoldOutList ? 'grayscale opacity-70' : ''}`} alt={p.name} loading="lazy" decoding="async"/>
+                    
+                    {isSoldOutList && (
+                        <div className="absolute top-3 right-3 bg-[#44403c] text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider shadow-sm border border-white">
+                            Wyprzedane
+                        </div>
+                    )}
                   </div>
-              </div>
-            </div>
-          ))
+                  <div className="p-6 flex flex-col flex-1">
+                      <p className="text-[#5c6b50] text-[10px] font-bold uppercase tracking-widest mb-1">{p.latin}</p>
+                      <h3 className="font-bold text-lg text-[#44403c] cursor-pointer hover:text-[#5c6b50] transition-colors mb-2" onClick={() => onProductClick(p)}>{p.name}</h3>
+                      <p className="text-[#78716c] text-sm mb-6 line-clamp-2 leading-relaxed">{p.desc}</p>
+                      <div className="flex justify-between items-center mt-auto pt-4 border-t border-[#e5e5e0]">
+                      <span className="text-xl font-bold text-[#44403c]">{p.price.toFixed(2)} <span className="text-sm font-normal text-[#a8a29e]">PLN</span></span>
+                      
+                      <button 
+                        onClick={(e) => { if(!isSoldOutList) addToCart(p); }} 
+                        disabled={isSoldOutList}
+                        className={`p-3 rounded-xl transition-colors active:scale-95 ${isSoldOutList ? 'bg-[#e7e5e4] text-[#a8a29e] cursor-not-allowed' : 'bg-[#f5f5f4] text-[#44403c] hover:bg-[#57534e] hover:text-white'}`}
+                      >
+                        <Icons.Plus/>
+                      </button>
+                      </div>
+                  </div>
+                </div>
+            );
+          })
         )}
       </div>
 
@@ -933,15 +1032,15 @@ const AboutView = memo(() => (
     <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-12 items-center">
       <div className="w-full md:w-1/2">
         <Reveal className="rounded-3xl overflow-hidden shadow-lg border border-[#e7e5e4]">
-            <img src="/zdjecia/arek.png" alt="Arkadiusz Kołacki" className="w-full aspect-square object-cover" />
+            <img src="/zdjecia/arek.png" alt="Arkadiusz Kołacki" className="w-full aspect-square object-cover" loading="lazy" decoding="async"/>
         </Reveal>
       </div>
       <div className="w-full md:w-1/2">
         <Reveal delay={200}>
           <h2 className="text-3xl md:text-4xl font-bold mb-6 text-[#44403c]">Cześć, jestem <span className="text-[#5c6b50]">Arek</span></h2>
           <div className="space-y-4 text-[#78716c] leading-relaxed font-light">
-              <p>Moja przygoda z ptasznikami zaczęła się w 2020 roku od małej Chromki. Dziś to pasja, którą dzielę się, oferując ptaszniki występujące w różnych regionach świata oraz transmitując to jak żyją w naturze i nie tylko...</p>
-              <p>Każdy pająk, który jest w mojej ofercie został wybrany tak, aby każdy znalazł coś dla siebie.</p>
+              <p>Moja przygoda z ptasznikami zaczęła się w 2020 roku od małej Chromki. Dziś to pasja, którą dzielę się z Wami, oferując ptaszniki z różnych regionów świata oraz transmitując to jak żyją w naturze.</p>
+              <p>Każdy pająk który jest w mojej ofercie jest wybrany tak aby zarówno początkujący jak i zaawansowany hodowca znalazł coś dla siebie. Dbam o to, abyś mógł/mogła cieszyć się swoim małym zwierzakiem.</p>
           </div>
            
           <div className="mt-8 p-6 bg-[#f0f0eb] rounded-2xl border border-[#e6e5d8] relative overflow-hidden group">
@@ -972,7 +1071,6 @@ const AboutView = memo(() => (
   </div>
 ));
 
-// --- StreamView ---
 const StreamView = memo(() => (
   <div className="animate-fade-in">
     <div className="bg-[#292524] rounded-[2rem] overflow-hidden shadow-2xl border border-[#1c1917] max-w-5xl mx-auto text-[#d6d3d1]">
@@ -999,7 +1097,7 @@ const StreamView = memo(() => (
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-[#44403c] p-0.5 border border-[#57534e]">
                 <div className="w-full h-full rounded-[0.5rem] flex items-center justify-center overflow-hidden">
-                   <img src={LOGO_URL2} alt="Logo" className="w-full h-full object-contain opacity-100" />
+                   <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain opacity-80" />
                 </div>
               </div>
               <div>
@@ -1017,7 +1115,6 @@ const StreamView = memo(() => (
   </div>
 ));
 
-// --- ShippingReturnsView ---
 const ShippingReturnsView = memo(() => (
   <div className="bg-white rounded-3xl border border-[#e5e5e0] p-8 md:p-16 animate-fade-in shadow-sm max-w-4xl mx-auto">
     <div className="flex items-center gap-4 mb-8 border-b border-[#e5e5e0] pb-6">
@@ -1036,17 +1133,17 @@ const ShippingReturnsView = memo(() => (
             <div className="bg-[#fafaf9] p-4 rounded-xl border border-[#e7e5e4] flex items-start gap-4">
                 <div className="p-2 bg-white rounded-lg border border-[#e7e5e4] text-[#5c6b50]"><Icons.Box className="w-5 h-5"/></div>
                 <div>
-                    <h4 className="font-bold text-[#44403c] mb-1">Paczkomaty InPost</h4>
-                    <p className="text-xs text-[#78716c]">Przedpłata: <strong className="text-[#5c6b50]">15.00 zł</strong></p>
+                    <h4 className="font-bold text-[#44403c] mb-1">Kurier Pocztex (żywe zwierzeta)</h4>
+                    <p className="text-xs text-[#78716c]">Przedpłata: <strong className="text-[#5c6b50]">30.00 zł</strong></p>
                     <p className="text-xs text-[#a8a29e] mt-1">Czas dostawy: 1-2 dni robocze</p>
                 </div>
             </div>
             <div className="bg-[#fafaf9] p-4 rounded-xl border border-[#e7e5e4] flex items-start gap-4">
                 <div className="p-2 bg-white rounded-lg border border-[#e7e5e4] text-[#5c6b50]"><Icons.Truck className="w-5 h-5"/></div>
                 <div>
-                    <h4 className="font-bold text-[#44403c] mb-1">Kurier DPD</h4>
-                    <p className="text-xs text-[#78716c]">Przedpłata: <strong className="text-[#5c6b50]">20.00 zł</strong></p>
-                    <p className="text-xs text-[#a8a29e] mt-1">Czas dostawy: 1 dzień roboczy</p>
+                    <h4 className="font-bold text-[#44403c] mb-1">Kurier Inpost</h4>
+                    <p className="text-xs text-[#78716c]">Przedpłata: <strong className="text-[#5c6b50]">20 zł</strong></p>
+                    <p className="text-xs text-[#a8a29e] mt-1">Czas dostawy: 1-2 dni robocze</p>
                 </div>
             </div>
         </div>
@@ -1090,7 +1187,6 @@ const ShippingReturnsView = memo(() => (
   </div>
 ));
 
-// --- TermsView ---
 const TermsView = memo(() => (
   <div className="bg-white rounded-3xl border border-[#e5e5e0] p-8 md:p-16 animate-fade-in shadow-sm max-w-4xl mx-auto">
     <div className="flex items-center gap-4 mb-8 border-b border-[#e5e5e0] pb-6">
@@ -1149,8 +1245,50 @@ const TermsView = memo(() => (
   </div>
 ));
 
+const PrivacyView = memo(() => (
+  <div className="bg-white rounded-3xl border border-[#e5e5e0] p-8 md:p-16 animate-fade-in shadow-sm max-w-4xl mx-auto">
+    <div className="flex items-center gap-4 mb-8 border-b border-[#e5e5e0] pb-6">
+      <div className="p-3 bg-[#f5f5f0] rounded-xl text-[#5c6b50]"><Icons.Lock className="w-6 h-6" /></div>
+      <h2 className="text-2xl font-bold text-[#44403c]">Polityka Prywatności</h2>
+    </div>
+    <div className="prose prose-stone max-w-none text-[#78716c] leading-relaxed space-y-8 text-sm font-light">
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">1. Administrator Danych</h3>
+        <p>Administratorem Twoich danych osobowych jest {COMPANY_DATA.name}, z siedzibą w {COMPANY_DATA.city}, przy ul. {COMPANY_DATA.address}, posiadający NIP: {COMPANY_DATA.nip} oraz REGON: {COMPANY_DATA.regon}.</p>
+        <p>Kontakt z Administratorem jest możliwy drogą elektroniczną pod adresem: {COMPANY_DATA.email} lub telefonicznie: {COMPANY_DATA.phone}.</p>
+      </section>
+
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">2. Cele i podstawy przetwarzania</h3>
+        <p>Przetwarzamy Twoje dane w celach:</p>
+        <ul className="list-disc pl-5 mt-1 space-y-1 marker:text-[#5c6b50]">
+           <li>zawarcia i wykonania umowy sprzedaży (art. 6 ust. 1 lit. b RODO),</li>
+           <li>realizacji obowiązków prawnych, np. wystawiania faktur (art. 6 ust. 1 lit. c RODO),</li>
+           <li>dochodzenia roszczeń i obrony przed nimi (art. 6 ust. 1 lit. f RODO),</li>
+           <li>analitycznych i statystycznych (art. 6 ust. 1 lit. f RODO).</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">3. Odbiorcy danych</h3>
+        <p>Twoje dane mogą być przekazywane podmiotom, które pomagają nam prowadzić sklep, np.: firmom kurierskim (InPost, DPD) w celu dostawy, operatorowi płatności (Stripe) w celu realizacji zapłaty, dostawcy hostingu i usług IT.</p>
+      </section>
+
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">4. Prawa użytkownika</h3>
+        <p>Przysługuje Ci prawo do dostępu do swoich danych, ich sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia danych, wniesienia sprzeciwu oraz wniesienia skargi do organu nadzorczego (Prezesa UODO).</p>
+      </section>
+
+      <section>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">5. Pliki Cookies</h3>
+        <p>Sklep używa plików cookies (ciasteczka) w celu zapewnienia prawidłowego działania strony (np. utrzymania sesji koszyka) oraz w celach statystycznych. Możesz zarządzać ustawieniami cookies w swojej przeglądarce.</p>
+      </section>
+    </div>
+  </div>
+));
+
 // --- GŁÓWNA APLIKACJA ---
-export default function App() {
+function AppContent() {
   const [activeView, setActiveView] = useState('home');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1208,7 +1346,6 @@ export default function App() {
         if (!res.ok) throw new Error();
         let data = await res.json();
          
-        // NORMALIZACJA DANYCH
         data = data.map(product => ({
             ...product,
             tags: typeof product.tags === 'string' ? product.tags.split(',').map(t => t.trim()) : (product.tags || []),
@@ -1255,7 +1392,7 @@ export default function App() {
       }
     } catch (err) {
       console.error("Błąd płatności:", err);
-      showToast(err.message, "error");
+      showToast(err.message || "Błąd płatności", "error");
       localStorage.removeItem('pendingCart'); 
     } finally {
       setCheckoutLoading(false);
@@ -1295,11 +1432,10 @@ export default function App() {
         .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
        
-      {/* Nawigacja */}
       <nav className="fixed top-0 w-full bg-[#faf9f6]/90 backdrop-blur-md z-[80] border-b border-[#e7e5e4] h-20 flex items-center shadow-sm">
         <div className="max-w-7xl mx-auto w-full px-6 flex justify-between items-center">
           <div className="cursor-pointer flex items-center" onClick={() => navigate('home')}>
-            <img src={LOGO_URL} alt="Spiderra" className="h-40 w-auto object-contain" />
+            <img src={LOGO_URL} alt="Spiderra" className="h-14 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-8">
             <div className="hidden md:flex gap-8 text-sm font-medium text-[#78716c]">
@@ -1321,7 +1457,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Menu Mobilne */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-[90] bg-[#faf9f6] pt-24 px-6 md:hidden animate-fade-in">
           <div className="flex flex-col gap-6 text-xl font-bold text-[#44403c]">
@@ -1337,9 +1472,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Widok Główny */}
       <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 min-h-[85vh]">
-        {/* Renderowanie widoków */}
         {activeView === 'home' && <HomeView navigateTo={navigate} products={products} onProductClick={openProductDetails} addToCart={addToCart} />}
         {activeView === 'about' && <AboutView />}
         {activeView === 'stream' && <StreamView />}
@@ -1348,7 +1481,6 @@ export default function App() {
         {activeView === 'shipping' && <ShippingReturnsView />}
         {activeView === 'success' && <SuccessView lastOrder={lastOrder} />}
          
-        {/* Logika dla widoku sklepu i szczegółów produktu */}
         {activeView === 'shop' && (
           selectedProduct ? (
             <ProductDetailsView 
@@ -1368,7 +1500,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Koszyk Panel - reszta bez zmian */}
       {isCartOpen && (
         <div className="fixed inset-0 z-[100] flex justify-end">
           <div className="absolute inset-0 bg-[#292524]/40 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)}></div>
@@ -1419,13 +1550,12 @@ export default function App() {
         </div>
       )}
 
-      {/* Stopka */}
       <footer className="bg-white border-t border-[#e7e5e4] pt-20 pb-12 mt-auto">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
             <div>
               <div className="mb-6 flex items-center">
-                <img src={LOGO_URL2} alt="Spiderra" className="h-40 w-auto object-contain grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500" />
+                <img src={LOGO_URL} alt="Spiderra" className="h-10 w-auto object-contain grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition-all duration-500" />
               </div>
               <div className="flex gap-3">
                 <a href="https://www.instagram.com/sp_iderra" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-[#f5f5f4] rounded-full flex items-center justify-center text-[#a8a29e] hover:bg-[#e7e5e4] hover:text-[#44403c] transition-all"><Icons.Instagram className="w-5 h-5"/></a>
@@ -1470,11 +1600,18 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Powiadomienia Toast */}
       <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 ${toast.type === 'error' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-[#292524] text-white shadow-2xl'} rounded-full transition-all duration-500 flex items-center gap-3 ${toast.visible ? 'translate-y-0 opacity-100' : 'translate-y-24 opacity-0'}`}>
         {toast.type === 'success' ? <Icons.Check className="text-emerald-400 w-4 h-4" /> : <Icons.X className="w-4 h-4" />}
         <span className="font-medium text-sm tracking-wide">{toast.message}</span>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
   );
 }
