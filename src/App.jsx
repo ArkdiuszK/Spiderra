@@ -10,7 +10,7 @@ const COMPANY_DATA = {
   address: "Lisów 88",
   zip: "26-660",
   city: "Lisów",
-  email: "kontakt@spiderra.pl",
+  email: "spiderra.kontakt@outlook.com",
   phone: "+48 514 729 121",
   nip: "0000000000", 
   regon: "000000000",
@@ -19,6 +19,7 @@ const COMPANY_DATA = {
 
 // --- KONFIGURACJA ZDJĘĆ ---
 const LOGO_URL = "/zdjecia/logo.png"; 
+const LOGO_URL2 = "/zdjecia/logo2.png"; 
 const HERO_IMAGE_URL = "/zdjecia/tlo.jpg"; 
 
 // --- DEFINICJA KATEGORII I GRUP FILTRÓW ---
@@ -28,6 +29,14 @@ const PRODUCT_CATEGORIES = [
     id: 'spider', 
     label: 'Ptaszniki',
     filterGroups: [
+      {
+        label: "Płeć", 
+        tags: [
+          { id: 'female', label: 'Samica' },
+          { id: 'male', label: 'Samiec' },
+          { id: 'unsexed', label: 'Niesex' }
+        ]
+      },
       {
         label: "Dla kogo?",
         tags: [
@@ -42,7 +51,6 @@ const PRODUCT_CATEGORIES = [
           { id: 'terrestrial', label: 'Naziemne' },
           { id: 'arboreal', label: 'Nadrzewne' },
           { id: 'fossorial', label: 'Podziemne' },
-          { id: 'dwarf', label: 'Karłowate' },
           { id: 'rare', label: 'Rzadkie' },
           { id: 'bestseller', label: 'Bestsellery' }
         ]
@@ -68,7 +76,7 @@ const PRODUCT_CATEGORIES = [
   }
 ];
 
-// --- ERROR BOUNDARY (Ochrona przed awarią całej strony) ---
+// --- ERROR BOUNDARY ---
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -88,7 +96,7 @@ class ErrorBoundary extends React.Component {
       return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-[#faf9f6] text-[#44403c] p-4">
           <h1 className="text-3xl font-bold mb-4">Ups! Coś poszło nie tak.</h1>
-          <p className="mb-6 text-[#78716c]">Wystąpił błąd podczas ładowania aplikacji. Spróbuj odświeżyć stronę.</p>
+          <p className="mb-6 text-[#78716c]">Wystąpił błąd krytyczny aplikacji. Spróbuj odświeżyć stronę.</p>
           <button 
             onClick={() => window.location.reload()} 
             className="px-6 py-3 bg-[#57534e] text-white rounded-xl hover:bg-[#44403c] transition-colors shadow-lg"
@@ -98,12 +106,11 @@ class ErrorBoundary extends React.Component {
         </div>
       );
     }
-
     return this.props.children; 
   }
 }
 
-// --- POMOCNIK SEO ---
+// --- POMOCNICY (SEO, Tailwind, Reveal) ---
 const SEO = ({ title, description }) => {
   useEffect(() => {
     document.title = title ? `${title} | Spiderra` : "Spiderra - Sklep z Ptaszniki i Akcesoriami";
@@ -115,11 +122,9 @@ const SEO = ({ title, description }) => {
     }
     metaDesc.content = description || "Sklep z ptasznikami i akcesoriami hodowlanymi.";
   }, [title, description]);
-
   return null;
 };
 
-// --- PRZYŚPIESZONE ŁADOWANIE TAILWINDA ---
 const injectTailwind = () => {
   if (typeof document !== 'undefined' && !document.getElementById('tailwind-cdn')) {
     const script = document.createElement('script');
@@ -131,7 +136,6 @@ const injectTailwind = () => {
 };
 injectTailwind();
 
-// --- CUSTOM HOOK: REVEAL ON SCROLL ---
 const useReveal = () => {
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef(null);
@@ -141,7 +145,6 @@ const useReveal = () => {
         setIsVisible(true);
         return;
     }
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -161,7 +164,6 @@ const useReveal = () => {
 const Reveal = memo(({ children, className = "", delay = 0 }) => {
   const [ref, isVisible] = useReveal();
   const transitionDelay = `${delay}ms`;
-   
   return (
     <div 
       ref={ref} 
@@ -211,7 +213,8 @@ const Icons = {
       <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
     </svg>
   ),
-  Loader: (p) => <IconBase {...p} className={`animate-spin ${p.className}`}><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></IconBase>
+  Loader: (p) => <IconBase {...p} className={`animate-spin ${p.className}`}><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></IconBase>,
+  ArrowUp: (p) => <IconBase {...p}><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></IconBase>
 };
 
 // --- DANE PRODUKTÓW (MOCK) ---
@@ -221,7 +224,7 @@ const MOCK_PRODUCTS_DATA = [
     name: 'Grammostola rosea', 
     latin: 'Grammostola rosea', 
     type: 'spider', 
-    tags: ['terrestrial', 'beginner', 'bestseller'], 
+    tags: ['terrestrial', 'beginner', 'bestseller', 'female'], 
     price: 150.00, 
     image: '/zdjecia/ptaszniki/grammostola_rosea.jpg', 
     desc: 'Ptasznik z Chile, znany ze swojego spokojnego usposobienia i łatwości hodowli. Gatunek naziemny, idealny dla początkujących.' 
@@ -231,7 +234,7 @@ const MOCK_PRODUCTS_DATA = [
     name: 'Caribena versicolor', 
     latin: 'Caribena versicolor', 
     type: 'spider', 
-    tags: ['arboreal', 'beginner', 'bestseller'], 
+    tags: ['arboreal', 'beginner', 'bestseller', 'unsexed'], 
     price: 85.00, 
     image: 'https://placehold.co/400x300/e2e8f0/10b981?text=Versicolor', 
     desc: 'Jeden z najpiękniejszych ptaszników nadrzewnych. Dzięki łagodnemu usposobieniu nadaje się na pierwszego pająka nadrzewnego.' 
@@ -241,7 +244,7 @@ const MOCK_PRODUCTS_DATA = [
     name: 'Theraphosa stirmi', 
     latin: 'Theraphosa stirmi', 
     type: 'spider', 
-    tags: ['terrestrial', 'advanced', 'rare', 'sold_out'], 
+    tags: ['terrestrial', 'advanced', 'rare', 'sold_out', 'female'], 
     price: 450.00, 
     image: 'https://placehold.co/400x300/e2e8f0/991b1b?text=Stirmi', 
     desc: 'Jeden z największych pająków świata. Wymaga doświadczenia w utrzymaniu odpowiedniej wilgotności.' 
@@ -301,8 +304,7 @@ const useCart = () => {
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
 
   const showToast = useCallback((message, type = 'success') => {
-    // Zabezpieczenie przed obiektami w message
-    const msgString = typeof message === 'string' ? message : 'Wystąpił błąd.';
+    const msgString = (typeof message === 'string') ? message : 'Wystąpił błąd operacji.';
     setToast({ visible: true, message: msgString, type });
     setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 4000);
   }, []);
@@ -328,7 +330,34 @@ const useCart = () => {
   return { cart, setCart, isCartOpen, setIsCartOpen, toast, addToCart, removeFromCart, updateQty, cartTotal, cartCount, showToast };
 };
 
-// --- WIDOKI (DEFINIOWANE PRZED APP) ---
+// --- KOMPONENT: SCROLL TO TOP ---
+const ScrollToTop = () => {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const toggleVisibility = () => {
+      if (window.pageYOffset > 500) setVisible(true);
+      else setVisible(false);
+    };
+    window.addEventListener('scroll', toggleVisibility);
+    return () => window.removeEventListener('scroll', toggleVisibility);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  return (
+    <button
+      onClick={scrollToTop}
+      className={`fixed bottom-24 right-6 z-[90] p-3 bg-white border border-[#e7e5e4] rounded-full shadow-lg text-[#57534e] hover:bg-[#f5f5f4] transition-all duration-300 transform ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
+    >
+      <Icons.ArrowUp className="w-5 h-5" />
+    </button>
+  );
+};
+
+// --- WIDOKI (DEFINIOWANE PRZED APPCONTENT) ---
 
 const SuccessView = memo(({ lastOrder }) => {
   if (!lastOrder) return null;
@@ -710,12 +739,11 @@ const HomeView = memo(({ navigateTo, products, onProductClick, addToCart }) => (
 const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
   const [category, setCategory] = useState('all');
   const [selectedTags, setSelectedTags] = useState([]); 
-  const [minPrice, setMinPrice] = useState(0); // Wartość filtrowania (aktualizowana z opóźnieniem)
-  const [maxPrice, setMaxPrice] = useState(1000); // Wartość filtrowania
+  const [minPrice, setMinPrice] = useState(0); 
+  const [maxPrice, setMaxPrice] = useState(1000); 
   const [sortOrder, setSortOrder] = useState('default');
   const [currentPage, setCurrentPage] = useState(1); 
   
-  // --- LOCAL STATE DLA SUWAKÓW (PŁYNNOŚĆ) ---
   const [localMinPrice, setLocalMinPrice] = useState(0);
   const [localMaxPrice, setLocalMaxPrice] = useState(1000);
 
@@ -742,7 +770,6 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
     return Math.max(...products.map(p => p.price));
   }, [products]);
 
-  // Inicjalizacja suwaków
   useEffect(() => {
     if (products.length > 0) {
         setMaxPrice(productsMaxPrice);
@@ -750,7 +777,6 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
     }
   }, [productsMaxPrice, products]);
 
-  // Debouncing suwaka (filtrowanie po 300ms bezczynności)
   useEffect(() => {
     const handler = setTimeout(() => {
         setMinPrice(localMinPrice);
@@ -924,7 +950,7 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
                         <button 
                           key={tag.id} 
                           onClick={() => toggleTag(tag.id)}
-                          className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all border ${selectedTags.includes(tag.id) ? 'bg-[#5c6b50] text-white border-[#5c6b50] shadow-sm' : 'bg-[#f5f5f4] text-[#78716c] border-[#e7e5e4] hover:bg-[#e7e5e4] hover:text-[#44403c]'}`}
+                          className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 border ${selectedTags.includes(tag.id) ? 'bg-[#5c6b50] text-white border-[#5c6b50] shadow-md' : 'bg-[#f5f5f4] text-[#78716c] border-[#e7e5e4] hover:bg-[#e7e5e4] hover:text-[#44403c]'}`}
                         >
                           {tag.label}
                         </button>
@@ -948,12 +974,12 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
             const isSoldOutList = p.tags && p.tags.includes('sold_out');
             
             return (
-                <div key={p.id} className="bg-white rounded-2xl border border-[#e5e5e0] hover:border-[#d6d3d1] shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col overflow-hidden group">
+                <div key={p.id} className="bg-white rounded-2xl border border-[#e5e5e0] hover:border-[#d6d3d1] shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group">
                   <div 
                     className="overflow-hidden h-64 cursor-pointer bg-[#fafaf9] relative" 
                     onClick={() => onProductClick(p)}
                   >
-                    <img src={p.image} className={`w-full h-full object-cover group-hover:scale-105 transition duration-700 ease-in-out ${isSoldOutList ? 'grayscale opacity-70' : ''}`} alt={p.name} loading="lazy" decoding="async"/>
+                    <img src={p.image} className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out ${isSoldOutList ? 'grayscale opacity-70' : ''}`} alt={p.name} loading="lazy" decoding="async"/>
                     
                     {isSoldOutList && (
                         <div className="absolute top-3 right-3 bg-[#44403c] text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider shadow-sm border border-white">
@@ -1026,47 +1052,73 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
   );
 });
 
-// --- AboutView ---
+// --- AboutView - ZMODYFIKOWANY DESIGN ---
 const AboutView = memo(() => (
-  <div className="bg-white rounded-3xl border border-[#e5e5e0] p-8 md:p-16 animate-fade-in shadow-sm">
-    <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-12 items-center">
-      <div className="w-full md:w-1/2">
-        <Reveal className="rounded-3xl overflow-hidden shadow-lg border border-[#e7e5e4]">
-            <img src="/zdjecia/arek.png" alt="Arkadiusz Kołacki" className="w-full aspect-square object-cover" loading="lazy" decoding="async"/>
-        </Reveal>
-      </div>
-      <div className="w-full md:w-1/2">
-        <Reveal delay={200}>
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-[#44403c]">Cześć, jestem <span className="text-[#5c6b50]">Arek</span></h2>
-          <div className="space-y-4 text-[#78716c] leading-relaxed font-light">
-              <p>Moja przygoda z ptasznikami zaczęła się w 2020 roku od małej Chromki. Dziś to pasja, którą dzielę się z Wami, oferując ptaszniki z różnych regionów świata oraz transmitując to jak żyją w naturze.</p>
-              <p>Każdy pająk który jest w mojej ofercie jest wybrany tak aby zarówno początkujący jak i zaawansowany hodowca znalazł coś dla siebie. Dbam o to, abyś mógł/mogła cieszyć się swoim małym zwierzakiem.</p>
+  <div className="animate-fade-in space-y-12">
+    {/* Sekcja 1: Hero / Wstęp */}
+    <div className="bg-white rounded-3xl border border-[#e5e5e0] overflow-hidden shadow-sm">
+       <div className="flex flex-col md:flex-row">
+          {/* Zdjęcie */}
+          <div className="w-full md:w-1/2 relative bg-[#f5f5f4] min-h-[400px]">
+             <img src="/zdjecia/arek.png" alt="Arkadiusz Kołacki" className="absolute inset-0 w-full h-full object-cover" />
+             {/* Gradient dla lepszej czytelności na mobile */}
+             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent md:hidden"></div>
           </div>
-           
-          <div className="mt-8 p-6 bg-[#f0f0eb] rounded-2xl border border-[#e6e5d8] relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <Icons.Bug className="w-24 h-24 text-[#5c6b50]" />
-            </div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-2 text-[#5c6b50]">
-                <Icons.MessageCircle className="w-6 h-6" />
-                <h3 className="font-bold text-lg">Potrzebujesz porady?</h3>
-              </div>
-              <p className="text-sm text-[#78716c] mb-4">
-                Dopiero zaczynasz i nie wiesz, jakiego pająka wybrać na start? Napisz do mnie – chętnie doradzę gatunek idealnie dopasowany do Twoich preferencji i warunków!
-              </p>
-              <a href={`mailto:${COMPANY_DATA.email}`} className="inline-flex items-center text-sm font-bold text-[#5c6b50] hover:text-[#4a5740] transition-colors border-b border-[#5c6b50] pb-0.5">
-                Napisz do mnie &rarr;
-              </a>
-            </div>
-          </div>
+          {/* Tekst */}
+          <div className="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center">
+             <span className="text-[#5c6b50] font-bold tracking-widest uppercase text-xs mb-4">O mnie</span>
+             <h2 className="text-4xl font-bold text-[#44403c] mb-6 leading-tight">Cześć, jestem Arek</h2>
+             <p>Moja przygoda z ptasznikami zaczęła się w 2020 roku od małej Chromki. Dziś to pasja, którą dzielę się z przyjemnością, oferując ptaszniki występujące w różnych regionach świata oraz transmitując podczas moich wypraw to jak żyją w naturze i nie tylko.</p>
 
-          <div className="flex gap-8 pt-8 mt-4 border-t border-[#e5e5e0]">
-            <div><p className="text-3xl font-bold text-[#44403c]">20+</p><p className="text-xs text-[#a8a29e] uppercase font-bold tracking-widest mt-1">Gatunków</p></div>
-            <div><p className="text-3xl font-bold text-[#44403c]">100%</p><p className="text-xs text-[#a8a29e] uppercase font-bold tracking-widest mt-1">Wsparcia</p></div>
+              <p>Każdy pająk, którego wybrałem do mojej oferty jest wyjątkowy na swój oryginalny sposób tak żeby każdy znalazł coś dla siebie. Z doświadczenia wiem, 
+
+                że wszystko zaczyna się od jednego a kończy na całym zapełnionym regale :D, mam nadzieję że Twoja przygoda z tymi fascynującymi zwierzętami będzie tak samo wspaniała jak moja...</p>
           </div>
-        </Reveal>
-      </div>
+       </div>
+    </div>
+
+    {/* Sekcja 2: Wartości (Grid) */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+       {/* Karta 1 */}
+       <div className="bg-[#fff] p-8 rounded-3xl border border-[#e5e5e0] shadow-sm hover:shadow-md transition-shadow group">
+          <div className="w-12 h-12 bg-[#f0fdf4] rounded-xl flex items-center justify-center text-[#5c6b50] mb-4 group-hover:scale-110 transition-transform">
+             <Icons.Bug className="w-6 h-6"/>
+          </div>
+          <h3 className="font-bold text-[#44403c] text-lg mb-2">Zdrowe Zwierzęta</h3>
+          <p className="text-sm text-[#78716c] leading-relaxed">Każdy pająk w ofercie jest przeze mnie doglądany, karmiony i obserwowany. Nie sprzedaję "kota w worku".</p>
+       </div>
+       {/* Karta 2 */}
+       <div className="bg-[#fff] p-8 rounded-3xl border border-[#e5e5e0] shadow-sm hover:shadow-md transition-shadow group">
+          <div className="w-12 h-12 bg-[#fff7ed] rounded-xl flex items-center justify-center text-orange-600 mb-4 group-hover:scale-110 transition-transform">
+             <Icons.Video className="w-6 h-6"/>
+          </div>
+          <h3 className="font-bold text-[#44403c] text-lg mb-2">Edukacja i Live</h3>
+          <p className="text-sm text-[#78716c] leading-relaxed">Transmisje z wypraw i karmienia to nie tylko show, to dowód na to, jak fascynująca jest natura.</p>
+       </div>
+       {/* Karta 3 */}
+       <div className="bg-[#fff] p-8 rounded-3xl border border-[#e5e5e0] shadow-sm hover:shadow-md transition-shadow group">
+          <div className="w-12 h-12 bg-[#f0f9ff] rounded-xl flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition-transform">
+             <Icons.MessageCircle className="w-6 h-6"/>
+          </div>
+          <h3 className="font-bold text-[#44403c] text-lg mb-2">Wsparcie na Start</h3>
+          <p className="text-sm text-[#78716c] leading-relaxed">Boisz się, że sobie nie poradzisz? Jestem tu, żeby pomóc. Dobierzemy gatunek idealny dla Ciebie.</p>
+       </div>
+    </div>
+
+    {/* Sekcja 3: CTA / Kontakt */}
+    <div className="bg-[#44403c] rounded-3xl p-8 md:p-16 text-center text-white relative overflow-hidden shadow-lg">
+       <div className="relative z-10 max-w-2xl mx-auto">
+          <h3 className="text-3xl font-bold mb-4">Masz pytania?</h3>
+          <p className="text-[#d6d3d1] mb-8 leading-relaxed">
+             Niezależnie czy szukasz pierwszego pająka, potrzebujesz porady w doborze pojemnika hodowlanego, czy chcesz zapytać o dostępność – napisz śmiało.
+          </p>
+          <a href={`mailto:${COMPANY_DATA.email}`} className="inline-block bg-[#5c6b50] hover:bg-[#4a5740] text-white px-10 py-4 rounded-xl font-bold transition-all transform hover:-translate-y-1 shadow-md">
+             Napisz do mnie
+          </a>
+       </div>
+       {/* Ozdobne kółka w tle */}
+       <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+       <div className="absolute bottom-0 right-0 w-64 h-64 bg-[#5c6b50]/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
     </div>
   </div>
 ));
@@ -1097,7 +1149,7 @@ const StreamView = memo(() => (
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-[#44403c] p-0.5 border border-[#57534e]">
                 <div className="w-full h-full rounded-[0.5rem] flex items-center justify-center overflow-hidden">
-                   <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain opacity-80" />
+                   <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain"/>
                 </div>
               </div>
               <div>
@@ -1133,17 +1185,17 @@ const ShippingReturnsView = memo(() => (
             <div className="bg-[#fafaf9] p-4 rounded-xl border border-[#e7e5e4] flex items-start gap-4">
                 <div className="p-2 bg-white rounded-lg border border-[#e7e5e4] text-[#5c6b50]"><Icons.Box className="w-5 h-5"/></div>
                 <div>
-                    <h4 className="font-bold text-[#44403c] mb-1">Kurier Pocztex (żywe zwierzeta)</h4>
-                    <p className="text-xs text-[#78716c]">Przedpłata: <strong className="text-[#5c6b50]">30.00 zł</strong></p>
+                    <h4 className="font-bold text-[#44403c] mb-1">Paczkomaty InPost</h4>
+                    <p className="text-xs text-[#78716c]">Przedpłata: <strong className="text-[#5c6b50]">15.00 zł</strong></p>
                     <p className="text-xs text-[#a8a29e] mt-1">Czas dostawy: 1-2 dni robocze</p>
                 </div>
             </div>
             <div className="bg-[#fafaf9] p-4 rounded-xl border border-[#e7e5e4] flex items-start gap-4">
                 <div className="p-2 bg-white rounded-lg border border-[#e7e5e4] text-[#5c6b50]"><Icons.Truck className="w-5 h-5"/></div>
                 <div>
-                    <h4 className="font-bold text-[#44403c] mb-1">Kurier Inpost</h4>
-                    <p className="text-xs text-[#78716c]">Przedpłata: <strong className="text-[#5c6b50]">20 zł</strong></p>
-                    <p className="text-xs text-[#a8a29e] mt-1">Czas dostawy: 1-2 dni robocze</p>
+                    <h4 className="font-bold text-[#44403c] mb-1">Kurier DPD</h4>
+                    <p className="text-xs text-[#78716c]">Przedpłata: <strong className="text-[#5c6b50]">20.00 zł</strong></p>
+                    <p className="text-xs text-[#a8a29e] mt-1">Czas dostawy: 1 dzień roboczy</p>
                 </div>
             </div>
         </div>
@@ -1435,7 +1487,7 @@ function AppContent() {
       <nav className="fixed top-0 w-full bg-[#faf9f6]/90 backdrop-blur-md z-[80] border-b border-[#e7e5e4] h-20 flex items-center shadow-sm">
         <div className="max-w-7xl mx-auto w-full px-6 flex justify-between items-center">
           <div className="cursor-pointer flex items-center" onClick={() => navigate('home')}>
-            <img src={LOGO_URL} alt="Spiderra" className="h-14 w-auto object-contain" />
+            <img src={LOGO_URL} alt="Spiderra" className="h-40 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-8">
             <div className="hidden md:flex gap-8 text-sm font-medium text-[#78716c]">
@@ -1473,7 +1525,14 @@ function AppContent() {
       )}
 
       <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 min-h-[85vh]">
-        {activeView === 'home' && <HomeView navigateTo={navigate} products={products} onProductClick={openProductDetails} addToCart={addToCart} />}
+        {activeView === 'home' && (
+          <HomeView 
+            navigateTo={navigate} 
+            products={products} 
+            onProductClick={openProductDetails} 
+            addToCart={addToCart} 
+          />
+        )}
         {activeView === 'about' && <AboutView />}
         {activeView === 'stream' && <StreamView />}
         {activeView === 'terms' && <TermsView />}
@@ -1499,6 +1558,9 @@ function AppContent() {
           )
         )}
       </main>
+
+      {/* --- PRZYCISK SCROLL TO TOP --- */}
+      <ScrollToTop />
 
       {isCartOpen && (
         <div className="fixed inset-0 z-[100] flex justify-end">
@@ -1555,7 +1617,7 @@ function AppContent() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
             <div>
               <div className="mb-6 flex items-center">
-                <img src={LOGO_URL} alt="Spiderra" className="h-10 w-auto object-contain grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition-all duration-500" />
+                <img src={LOGO_URL2} alt="Spiderra" className="h-40 w-auto object-contain grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition-all duration-500" />
               </div>
               <div className="flex gap-3">
                 <a href="https://www.instagram.com/sp_iderra" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-[#f5f5f4] rounded-full flex items-center justify-center text-[#a8a29e] hover:bg-[#e7e5e4] hover:text-[#44403c] transition-all"><Icons.Instagram className="w-5 h-5"/></a>
@@ -1608,6 +1670,7 @@ function AppContent() {
   );
 }
 
+// --- GŁÓWNY PUNKT WEJŚCIA (APP) ---
 export default function App() {
   return (
     <ErrorBoundary>
