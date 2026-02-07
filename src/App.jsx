@@ -1078,10 +1078,11 @@ const AboutView = memo(() => (
              <span className="text-[#5c6b50] font-bold tracking-widest uppercase text-xs mb-4">O mnie</span>
              <h2 className="text-4xl font-bold text-[#44403c] mb-6 leading-tight">Cześć, jestem Arek.</h2>
              <p className="text-[#78716c] leading-relaxed mb-6">
-                Witaj w świecie Spiderra! Wszystko zaczęło się w 2020 roku od jednej, małej Chromki (*Chromatopelma cyaneopubescens*). To, co miało być ciekawostką, przerodziło się w życiową pasję i sposób na życie.
+                Moja przygoda z terrarystyką zaczęła się w 2020 roku od małej Chromki. To właśnie od niej wszystko się zaczęło. Z czasem, gdy gatunków przybywało narodziła się myśl: „Ciekawe, jak one żyją w naturze?”.
+                To właśnie ta myśl sprawiła, że spakowałem plecak i ruszyłem w świat. Moje podróże szybko stały się czymś więcej niż tylko szukaniem pająków – to była droga do odkrywania najdalszych zakątków globu i przeżywania przygód, których nie da się zapomnieć.
              </p>
              <p className="text-[#78716c] leading-relaxed">
-                Dziś Spiderra to miejsce, gdzie terrarystyka spotyka się z jakością. Nie jestem wielką korporacją – jestem hobbystą, który chce dzielić się fascynacją do tych niesamowitych stworzeń.
+                Spiderra to połączenie moich hobby a jednocześnie iskra do tego, aby dzielić się z Wami energią, którą przywożę z każdej wyprawy. Dzięki, że jesteś częścią tej podróży!
              </p>
           </div>
        </div>
@@ -1095,7 +1096,7 @@ const AboutView = memo(() => (
              <Icons.Bug className="w-6 h-6"/>
           </div>
           <h3 className="font-bold text-[#44403c] text-lg mb-2">Najciekawsze gatunki</h3>
-          <p className="text-sm text-[#78716c] leading-relaxed">Każdy pająk w ofercie jest przeze mnie doglądany, karmiony i obserwowany. Nie sprzedaję "kota w worku".</p>
+          <p className="text-sm text-[#78716c] leading-relaxed">Spośród tysięcy gatunków wybrałem te, które wzbudzają zachywyt pod względem wyglądu, zachowania i wielu innych czynników</p>
        </div>
        {/* Karta 2 */}
        <div className="bg-[#fff] p-8 rounded-3xl border border-[#e5e5e0] shadow-sm hover:shadow-md transition-shadow group">
@@ -1111,7 +1112,7 @@ const AboutView = memo(() => (
              <Icons.MessageCircle className="w-6 h-6"/>
           </div>
           <h3 className="font-bold text-[#44403c] text-lg mb-2">Wsparcie na Start</h3>
-          <p className="text-sm text-[#78716c] leading-relaxed">Boisz się, że sobie nie poradzisz? Jestem tu, żeby pomóc. Dobierzemy gatunek idealny dla Ciebie.</p>
+          <p className="text-sm text-[#78716c] leading-relaxed">Boisz się postawić pierwszy krok? Jestem tu, żeby pomóc. Dobierzemy gatunek idealny dla Ciebie.</p>
        </div>
     </div>
 
