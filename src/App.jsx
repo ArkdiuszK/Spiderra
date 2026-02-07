@@ -1094,7 +1094,7 @@ const AboutView = memo(() => (
           <div className="w-12 h-12 bg-[#f0fdf4] rounded-xl flex items-center justify-center text-[#5c6b50] mb-4 group-hover:scale-110 transition-transform">
              <Icons.Bug className="w-6 h-6"/>
           </div>
-          <h3 className="font-bold text-[#44403c] text-lg mb-2">Zdrowe Zwierzęta</h3>
+          <h3 className="font-bold text-[#44403c] text-lg mb-2">Najciekawsze gatunki</h3>
           <p className="text-sm text-[#78716c] leading-relaxed">Każdy pająk w ofercie jest przeze mnie doglądany, karmiony i obserwowany. Nie sprzedaję "kota w worku".</p>
        </div>
        {/* Karta 2 */}
