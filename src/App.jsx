@@ -6,14 +6,13 @@ const API_URL = isProduction ? '/.netlify/functions' : 'http://localhost:4242';
 
 // --- KONFIGURACJA DANYCH FIRMY ---
 const COMPANY_DATA = {
-  name: "Spiderra.pl",
+  name: "Spiderra.pl - Arkadiusz Kołacki",
   address: "Rakowicka 22D/27",
   zip: "31-510",
   city: "Kraków",
   email: "spiderra.kontakt@outlook.com",
   phone: "+48 514 729 121",
-  nip: "0000000000", 
-  regon: "000000000",
+  nip: "", 
   bankAccount: "00 0000 0000 0000 0000 0000 0000"
 };
 
@@ -64,6 +63,7 @@ const PRODUCT_CATEGORIES = [
       {
         label: "Kategorie",
         tags: [
+          { id: 'terrarium', label: 'Terraria' },
           { id: 'container', label: 'Pojemniki hodowlane' },
           { id: 'substrate', label: 'Podłoże' },
           { id: 'tools', label: 'Narzędzia' },
@@ -193,7 +193,7 @@ const Icons = {
   Video: (p) => <IconBase {...p}><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></IconBase>,
   FileText: (p) => <IconBase {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></IconBase>,
   Lock: (p) => <IconBase {...p}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></IconBase>,
-  ArrowLeft: (p) => <IconBase {...p}><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></IconBase>,
+  ArrowLeft: (p) => <IconBase {...p}><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 5"/></IconBase>,
   ArrowRight: (p) => <IconBase {...p}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></IconBase>,
   ChevronLeft: (p) => <IconBase {...p}><polyline points="15 18 9 12 15 6" /></IconBase>,
   ChevronRight: (p) => <IconBase {...p}><polyline points="9 18 15 12 9 6" /></IconBase>,
@@ -216,7 +216,7 @@ const Icons = {
   ArrowUp: (p) => <IconBase {...p}><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></IconBase>
 };
 
-// --- DANE PRODUKTÓW (MOCK) ---
+// --- DANE PRODUKTÓW (MOCK - ładują się błyskawicznie przed zapytaniem API) ---
 const MOCK_PRODUCTS_DATA = [
   { 
     id: 'spider1', 
@@ -303,7 +303,7 @@ const useCart = () => {
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
 
   const showToast = useCallback((message, type = 'success') => {
-    // Zabezpieczenie przed obiektami w message
+    // Zabezpieczenie przed błędami renderowania obiektów w toście
     const msgString = (typeof message === 'string') ? message : 'Wystąpił błąd operacji.';
     setToast({ visible: true, message: msgString, type });
     setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 4000);
@@ -446,7 +446,7 @@ const BestsellerSlider = memo(({ products, onProductClick, addToCart }) => {
             onClick={() => onProductClick(product)}
           >
             <div className="h-48 overflow-hidden rounded-t-2xl bg-[#fafaf9] relative">
-              <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" decoding="async"/>
+              <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="eager" />
               <div className="absolute top-3 left-3 bg-[#5c6b50] text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider shadow-sm">
                 Top
               </div>
@@ -474,58 +474,116 @@ const BestsellerSlider = memo(({ products, onProductClick, addToCart }) => {
   );
 });
 
+// --- KOMPONENT: TRAVEL GALLERY (DWA RZĘDY, UNIKALNE, DELTA TIME ANIMATION) ---
 const TravelGallery = memo(({ navigateTo }) => {
-  const photos = [
-    { id: 1, src: "/zdjecia/cypr.jpg", location: "Cypr", desc: "Tarantula w naturze" },
-    { id: 2, src: "/zdjecia/madera.jpg", location: "Madera", desc: "Madera" },
-    { id: 3, src: "/zdjecia/hiszpania.JPG", location: "Hiszpania", desc: "Barcelona" },
-    { id: 4, src: "/zdjecia/maroko.jpg", location: "Maroko", desc: "Marrakesz" },
+  const [isHovered, setIsHovered] = useState(false);
+  const row1Ref = useRef(null);
+  const row2Ref = useRef(null);
+  const pos1 = useRef(0);
+  const pos2 = useRef(0);
+
+  // Pełna lista zdjęć
+  const allPhotos = [
+    { id: 1, src: "/zdjecia/cypr.jpg", location: "Cypr", desc: "Tarantula w naturze", width: "w-72" },
+    { id: 2, src: "/zdjecia/madera.jpg", location: "Madera", desc: "Madera", width: "w-96" },
+    { id: 3, src: "/zdjecia/hiszpania.JPG", location: "Hiszpania", desc: "Barcelona", width: "w-64" },
+    { id: 4, src: "/zdjecia/maroko.jpg", location: "Maroko", desc: "Marrakesz", width: "w-80" },
+    { id: 5, src: "/zdjecia/rzym.jpg", location: "Włochy", desc: "Sycylia", width: "w-[400px]" },
+    { id: 6, src: "/zdjecia/saloniki.jpg", location: "Grecja", desc: "Saloniki", width: "w-72" },
+    { id: 7, src: "/zdjecia/malta.jpg", location: "Malta", desc: "Malta", width: "w-72" },
+    { id: 8, src: "/zdjecia/ochryd.jpg", location: "Macedonia", desc: "Ochryd", width: "w-96" },
+    { id: 9, src: "/zdjecia/szwecja.jpg", location: "Szwecja", desc: "Karlskrona", width: "w-64" },
+    { id: 10, src: "/zdjecia/watykan.jpg", location: "Watykan", desc: "Watykan", width: "w-80" },
+    { id: 11, src: "/zdjecia/nicea.jpg", location: "Francja", desc: "Nicea", width: "w-[400px]" },
+    { id: 12, src: "/zdjecia/monako.jpg", location: "Monako", desc: "Monako", width: "w-72" },
+    { id: 13, src: "/zdjecia/zadar.jpg", location: "Chorwacja", desc: "Zadar", width: "w-96" },
+    { id: 14, src: "/zdjecia/austria.jpg", location: "Austria", desc: "Villach", width: "w-64" },
+    { id: 15, src: "/zdjecia/jordania.jpg", location: "Jordania", desc: "Wadi Musa", width: "w-[400px]" },
   ];
 
-  const displayPhotos = photos.slice(0, 4);
+  // Dzielimy na dwie unikalne grupy
+  const half = Math.ceil(allPhotos.length / 2);
+  const group1 = allPhotos.slice(0, half);
+  const group2 = allPhotos.slice(half);
+
+  // Powielamy grupy x4, aby stworzyć długi, płynny pasek (pętla)
+  const row1 = [...group1, ...group1, ...group1, ...group1];
+  const row2 = [...group2, ...group2, ...group2, ...group2];
+
+  useEffect(() => {
+    let rAFId;
+    let lastTime = performance.now();
+    
+    const animate = (time) => {
+        const dt = time - lastTime;
+        lastTime = time;
+
+        // Prędkość w pikselach na milisekundę. 
+        // 0.012 px/ms to około 0.2px na klatkę (płynny powolny ruch)
+        // 0.003 px/ms to slow motion na hover
+        const speed1 = isHovered ? 0.02 : 0.03; 
+        const speed2 = speed1 * 0.8;
+
+        if (row1Ref.current) {
+            pos1.current += dt * speed1;
+            // Resetujemy gdy przesuniemy się o długość jednego zestawu (1/4 całości bo powieliliśmy 4 razy)
+            const max1 = row1Ref.current.scrollWidth / 4;
+            if (pos1.current >= max1) pos1.current %= max1; // Używamy modulo żeby pętla była bezstratna
+            row1Ref.current.style.transform = `translateX(-${pos1.current}px)`;
+        }
+
+        if (row2Ref.current) {
+            pos2.current += dt * speed2; 
+            const max2 = row2Ref.current.scrollWidth / 4;
+            if (pos2.current >= max2) pos2.current %= max2;
+            row2Ref.current.style.transform = `translateX(-${pos2.current}px)`;
+        }
+
+        rAFId = requestAnimationFrame(animate);
+    };
+
+    rAFId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rAFId);
+  }, [isHovered]);
 
   return (
-    <section className="max-w-7xl mx-auto px-6 pt-16">
-      <div className="flex flex-col md:flex-row items-end justify-between mb-10 gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-2 text-[#5c6b50]">
+    <section className="py-16 overflow-hidden bg-[#faf9f6]" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} onTouchStart={() => setIsHovered(true)}>
+      <div className="max-w-7xl mx-auto px-6 mb-10">
+         <div className="flex items-center gap-2 mb-2 text-[#5c6b50]">
             <Icons.Camera className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest">Ekspedycje</span>
-          </div>
-          <h3 className="text-3xl md:text-4xl font-bold text-[#44403c]">Z Dziennika Podróży</h3>
-        </div>
-        <p className="text-sm max-w-md text-right md:text-left leading-relaxed">
-          A oto miejsca, które już odwiedziłem...
-        </p>
+         </div>
+         <h3 className="text-3xl md:text-4xl font-bold text-[#44403c]">Z Dziennika Podróży</h3>
+         <p className="text-[#78716c] text-sm mt-2">A oto kraje, które już odwiedziłem</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 auto-rows-[250px] gap-4">
-        {displayPhotos.map((photo, index) => (
-          <div 
-            key={photo.id}
-            className={`relative rounded-3xl overflow-hidden group cursor-pointer shadow-sm border border-[#e5e5e0] ${
-              index === 0 ? 'md:col-span-2 md:row-span-2' : 'md:col-span-1'
-            }`}
-          >
-            <img src={photo.src} alt={photo.location} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" loading="lazy" decoding="async"/>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
-              <p className="text-white font-bold text-lg">{photo.location}</p>
-              {index === 0 && <p className="text-stone-300 text-sm mt-1">{photo.desc}</p>}
-            </div>
-          </div>
-        ))}
+      <div className="space-y-8">
+        {/* RZĄD 1 - Unikalne zdjęcia (grupa 1) */}
+        <div className="w-full overflow-hidden">
+           <div ref={row1Ref} className="flex gap-6 w-max will-change-transform">
+              {row1.map((item, i) => (
+                 <div key={`r1-${i}`} className={`relative h-80 rounded-3xl overflow-hidden shrink-0 border border-[#e5e5e0] shadow-sm cursor-pointer ${item.width}`}>
+                   <img src={item.src} alt={item.location} className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" loading="lazy" />
+                   <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-[#44403c] shadow-sm">
+                      {item.location}
+                   </div>
+                 </div>
+              ))}
+           </div>
+        </div>
 
-        <div 
-          onClick={() => navigateTo('stream')} 
-          className="relative rounded-3xl overflow-hidden shadow-sm border border-[#e5e5e0] bg-[#57534e] flex flex-col items-center justify-center p-6 text-center cursor-pointer group hover:bg-[#44403c] transition-colors md:col-span-1"
-        >
-            <p className="text-white font-bold text-xl mb-2">...i wiele więcej!</p>
-            <p className="text-[#a8a29e] text-xs leading-relaxed max-w-[150px]">
-              Śledź moje wyprawy na bieżąco w sekcji Transmisja.
-            </p>
-            <div className="mt-6 p-3 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors">
-                <Icons.ArrowRight className="w-5 h-5 text-white" />
-            </div>
+        {/* RZĄD 2 - Unikalne zdjęcia (grupa 2) */}
+        <div className="w-full overflow-hidden">
+           <div ref={row2Ref} className="flex gap-6 w-max will-change-transform">
+              {row2.map((item, i) => (
+                 <div key={`r2-${i}`} className={`relative h-80 rounded-3xl overflow-hidden shrink-0 border border-[#e5e5e0] shadow-sm cursor-pointer ${item.width}`}>
+                   <img src={item.src} alt={item.location} className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" loading="lazy" />
+                   <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-[#44403c] shadow-sm">
+                      {item.location}
+                   </div>
+                 </div>
+              ))}
+           </div>
         </div>
       </div>
     </section>
@@ -722,7 +780,7 @@ const HomeView = memo(({ navigateTo, products, onProductClick, addToCart }) => (
         <div className="inline-block px-4 py-1.5 mb-6 text-xs font-bold tracking-widest uppercase bg-[#f0f0eb] rounded-full border border-[#e6e5e4] shadow-sm">
           Nowości już dostępne!
         </div>
-        <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-[1.1] tracking-tight">
+        <h1 className="text-5xl md:text-7xl font-bold text-[#44403c] mb-8 leading-[1.1] tracking-tight">
           Terrarystyka i podróże <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5c6b50] to-[#4a5740]">w jednym</span>
         </h1>
@@ -739,18 +797,18 @@ const HomeView = memo(({ navigateTo, products, onProductClick, addToCart }) => (
        <BestsellerSlider products={products} onProductClick={onProductClick} addToCart={addToCart} />
     </section>
 
-    {/* Sekcja Podróży - Zaktualizowana */}
+    {/* Sekcja Podróży */}
     <TravelGallery navigateTo={navigateTo} />
   </div>
 ));
 
 // --- ShopView ---
 const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
-  const [category, setCategory] = useState('all');
+  const [category, setCategory] = useState('spider'); // Domyślnie ptaszniki
   const [selectedTags, setSelectedTags] = useState([]); 
   const [minPrice, setMinPrice] = useState(0); 
   const [maxPrice, setMaxPrice] = useState(1000); 
-  const [sortOrder, setSortOrder] = useState('default');
+  const [sortOrder, setSortOrder] = useState('az'); // Domyślnie alfabetycznie
   const [currentPage, setCurrentPage] = useState(1); 
   
   const [localMinPrice, setLocalMinPrice] = useState(0);
@@ -846,13 +904,6 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
   const paginatedProducts = filtered.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
-  );
-
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center py-24">
-      <Icons.Loader className="w-10 h-10 text-[#5c6b50] opacity-50" />
-      <p className="mt-4 text-[#a8a29e] font-medium text-sm tracking-wide uppercase">Ładowanie asortymentu...</p>
-    </div>
   );
 
   return (
@@ -972,7 +1023,14 @@ const ShopView = memo(({ addToCart, products, loading, onProductClick }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative min-h-[300px]">
+        {loading && products.length === MOCK_PRODUCTS_DATA.length ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/50 backdrop-blur-sm z-10 rounded-2xl">
+            <Icons.Loader className="w-10 h-10 text-[#5c6b50] opacity-80" />
+            <p className="mt-4 text-[#78716c] font-medium text-sm tracking-wide uppercase">Odświeżanie oferty...</p>
+          </div>
+        ) : null}
+
         {paginatedProducts.length === 0 ? (
           <div className="col-span-full text-center py-20 text-[#a8a29e]">
             <p className="text-lg">Nie znaleziono produktów spełniających kryteria.</p>
@@ -1160,7 +1218,7 @@ const StreamView = memo(() => (
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-[#44403c] p-0.5 border border-[#57534e]">
                 <div className="w-full h-full rounded-[0.5rem] flex items-center justify-center overflow-hidden">
-                   <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
+                   <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain opacity-80" />
                 </div>
               </div>
               <div>
@@ -1186,64 +1244,51 @@ const ShippingReturnsView = memo(() => (
     </div>
      
     <div className="prose prose-stone max-w-none text-[#78716c] leading-relaxed space-y-10 text-sm font-light">
-       
-      {/* Sekcja Wysyłki */}
-      <section className="space-y-4">
-        <h3 className="font-bold text-[#44403c] text-lg mb-2 border-b border-[#f5f5f4] pb-2">Metody i Koszty Dostawy</h3>
-        <p>Dbamy o to, aby Twoje zamówienie dotarło do Ciebie bezpiecznie i szybko. Oferujemy następujące opcje dostawy na terenie Polski:</p>
-         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <div className="bg-[#fafaf9] p-4 rounded-xl border border-[#e7e5e4] flex items-start gap-4">
-                <div className="p-2 bg-white rounded-lg border border-[#e7e5e4] text-[#5c6b50]"><Icons.Box className="w-5 h-5"/></div>
-                <div>
-                    <h4 className="font-bold text-[#44403c] mb-1">Kurier Pocztex (żywe zwierzęta)</h4>
-                    <p className="text-xs text-[#78716c]">Przedpłata: <strong className="text-[#5c6b50]">30.00 zł</strong></p>
-                    <p className="text-xs text-[#a8a29e] mt-1">Czas dostawy: 1-2 dni robocze</p>
-                </div>
+      
+      {/* --- SEKCJA 1: WYSYŁKA --- */}
+      <section>
+        <h3 className="font-bold text-[#44403c] text-lg mb-4">Wysyłka i Bezpieczeństwo</h3>
+        <p>Dbam o to, aby każdy ptasznik dotarł do Ciebie w idealnej kondycji. Pakowanie zwierząt to moja specjalność.</p>
+        
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-[#fafaf9] p-4 rounded-xl border border-[#e7e5e4]">
+                <h4 className="font-bold text-[#44403c] mb-1">Żywe Zwierzęta</h4>
+                <p>Wysyłane wyłącznie <strong>od poniedziałku do środy</strong>. Dzięki temu mamy pewność, że paczka nie utknie w magazynie kurierskim przez weekend.</p>
             </div>
-            <div className="bg-[#fafaf9] p-4 rounded-xl border border-[#e7e5e4] flex items-start gap-4">
-                <div className="p-2 bg-white rounded-lg border border-[#e7e5e4] text-[#5c6b50]"><Icons.Truck className="w-5 h-5"/></div>
-                <div>
-                    <h4 className="font-bold text-[#44403c] mb-1">Kurier Inpost</h4>
-                    <p className="text-xs text-[#78716c]">Przedpłata: <strong className="text-[#5c6b50]">23.00 zł</strong></p>
-                    <p className="text-xs text-[#a8a29e] mt-1">Czas dostawy: 1-2 dni robocze</p>
-                </div>
+            <div className="bg-[#fafaf9] p-4 rounded-xl border border-[#e7e5e4]">
+                <h4 className="font-bold text-[#44403c] mb-1">Akcesoria</h4>
+                <p>Wysyłane od poniedziałku do piątku. Czas realizacji to zazwyczaj 24h.</p>
             </div>
         </div>
 
-        <div className="bg-[#f0fdf4] p-4 rounded-xl border border-green-100 text-green-800 text-xs mt-4">
-            <strong>Ważne:</strong> Żywe zwierzęta wysyłamy wyłącznie <strong>od poniedziałku do środy</strong>, aby uniknąć ryzyka utknięcia przesyłki w magazynie kurierskim przez weekend. Akcesoria wysyłamy od poniedziałku do piątku.
-        </div>
-      </section>
-
-      {/* Sekcja Bezpieczeństwa */}
-      <section className="space-y-4">
-        <h3 className="font-bold text-[#44403c] text-lg mb-2 border-b border-[#f5f5f4] pb-2">Bezpieczeństwo Przesyłek (Heatpack)</h3>
-        <p>W okresie jesienno-zimowym (gdy temperatury spadają poniżej 10°C), do każdej przesyłki z żywym zwierzęciem <strong>obowiązkowo dokładamy wkład grzewczy (heatpack)</strong> oraz pakujemy pająka w styrobox. Koszt pakowania zimowego jest wliczony w cenę wysyłki lub doliczany automatycznie w koszyku.</p>
-        <p>Gwarantujemy, że zwierzęta są pakowane w sposób humanitarny i bezpieczny, uniemożliwiający im ucieczkę oraz chroniący przed wstrząsami.</p>
-      </section>
-
-      {/* Sekcja Gwarancji (LAG) */}
-      <section className="space-y-4">
-        <h3 className="font-bold text-[#44403c] text-lg mb-2 border-b border-[#f5f5f4] pb-2">Gwarancja Żywej Dostawy (LAG)</h3>
-        <p>Jesteśmy pewni naszych metod pakowania, dlatego udzielamy <strong>Gwarancji na Żywą Dostawę (Live Arrival Guarantee)</strong>. Oznacza to, że bierzemy pełną odpowiedzialność za dotarcie pająka żywego i zdrowego.</p>
-        <p className="font-bold mt-2">Warunki uznania gwarancji:</p>
+        <h4 className="font-bold text-[#44403c] mt-6 mb-2">Bezpieczne Pakowanie (Zima/Lato)</h4>
         <ul className="list-disc pl-5 space-y-1 marker:text-[#5c6b50]">
-            <li>Odbiór paczki w dniu doręczenia (w przypadku Paczkomatu - maksymalnie do 2 godzin od umieszczenia paczki w skrytce).</li>
-            <li><strong>Nagranie filmu z otwierania paczki (unboxing):</strong> Film musi być ciągły, bez cięć, pokazywać etykietę adresową oraz moment otwierania pojemnika ze zwierzęciem.</li>
+            <li><strong>Styrobox:</strong> Każde zwierzę pakowane jest w termiczne pudełko chroniące przed zmianami temperatury.</li>
+            <li><strong>Heatpack (Ogrzewacz):</strong> W okresie jesienno-zimowym (gdy temp. spada poniżej 15°C) dokładam go do każdej paczki z pająkiem. Gwarantuje ciepło przez 40h-72h.</li>
         </ul>
-        <p>W przypadku śmierci zwierzęcia w transporcie i spełnieniu powyższych warunków, zwracamy 100% ceny zwierzęcia lub wysyłamy nowy egzemplarz na nasz koszt (jeśli jest dostępny).</p>
       </section>
 
-      {/* Sekcja Zwrotów */}
-      <section className="space-y-4">
-        <h3 className="font-bold text-[#44403c] text-lg mb-2 border-b border-[#f5f5f4] pb-2">Zwroty i Odstąpienie od Umowy</h3>
-        <p>Zgodnie z ustawą o prawach konsumenta, masz prawo odstąpić od umowy w terminie 14 dni od otrzymania towaru. </p>
-        <p className="font-bold text-stone-700">Akcesoria:</p>
-        <p>Zwracany towar musi być w stanie niezmienionym (nieużywany, w oryginalnym opakowaniu). Koszt odesłania towaru ponosi Kupujący.</p>
-        <p className="font-bold text-stone-700 mt-2">Żywe zwierzęta:</p>
-        <p>Ze względu na specyfikę towaru (rzecz ulegająca szybkiemu zepsuciu lub mająca krótki termin przydatności do użycia - art. 38 pkt 4 ustawy o prawach konsumenta), oraz ze względu na dobrostan zwierząt, prosimy o przemyślane zakupy. Zwrot żywych zwierząt jest procesem skomplikowanym i ryzykownym dla samego zwierzęcia. W przypadku chęci zwrotu, prosimy o pilny kontakt w celu ustalenia bezpiecznej procedury.</p>
-        <p className="mt-4">Adres do zwrotów: <br/>{COMPANY_DATA.name}<br/>{COMPANY_DATA.address}<br/>{COMPANY_DATA.zip} {COMPANY_DATA.city}</p>
+      {/* --- SEKCJA 2: LAG --- */}
+      <section className="bg-[#f0fdf4] p-6 rounded-2xl border border-green-100">
+        <h3 className="font-bold text-green-800 text-lg mb-2">Gwarancja LAG (Live Arrival Guarantee)</h3>
+        <p className="text-green-700 mb-4">Biorę pełną odpowiedzialność za transport. Jeśli pająk dotrze martwy – zwracam pieniądze lub wysyłam nową sztukę na mój koszt.</p>
+        
+        <p className="font-bold text-green-800 text-xs uppercase tracking-wide mb-2">WARUNKI UZNANIA GWARANCJI:</p>
+        <ol className="list-decimal pl-5 space-y-2 marker:text-green-600 text-green-800">
+            <li>Odbiór paczki w dniu doręczenia.</li>
+            <li><strong>Obowiązkowy film z otwierania paczki (Unboxing):</strong> Film musi być ciągły, bez cięć i pokazywać moment otwierania pudełka z pająkiem.</li>
+            <li>Zgłoszenie reklamacji mailowo w ciągu 2 godzin od odbioru paczki.</li>
+        </ol>
+      </section>
+
+      {/* --- SEKCJA 3: ZWROTY --- */}
+      <section>
+        <h3 className="font-bold text-[#44403c] text-lg mb-4">Zwroty (Odstąpienie od umowy)</h3>
+        <ul className="list-disc pl-5 space-y-2 marker:text-[#5c6b50]">
+            <li><strong>Akcesoria:</strong> Masz 14 dni na zwrot nieużywanego towaru bez podania przyczyny. Koszt odesłania ponosi Kupujący.</li>
+            <li><strong>Żywe zwierzęta:</strong> Ze względu na specyfikę towaru (rzecz ulegająca szybkiemu zepsuciu) oraz ryzyko dla zdrowia zwierzęcia, <strong>nie przyjmuję zwrotów żywych pająków bez podania przyczyny</strong> (zgodnie z art. 38 pkt 4 ustawy o prawach konsumenta). Proszę o przemyślane zakupy!</li>
+        </ul>
+        <p className="mt-4 text-xs text-[#a8a29e]">Adres do zwrotów: {COMPANY_DATA.name}, ul. {COMPANY_DATA.address}, {COMPANY_DATA.zip} {COMPANY_DATA.city}</p>
       </section>
 
     </div>
@@ -1258,50 +1303,38 @@ const TermsView = memo(() => (
     </div>
     <div className="prose prose-stone max-w-none text-[#78716c] leading-relaxed space-y-8 text-sm font-light">
       <section>
-        <h3 className="font-bold text-[#44403c] text-base mb-3">I. Postanowienia ogólne</h3>
-        <p>Niniejszy Regulamin określa ogólne warunki, sposób świadczenia Usług drogą elektroniczną i sprzedaży prowadzonej za pośrednictwem Sklepu Internetowego www.spiderra.netlify.app. Sklep prowadzi {COMPANY_DATA.name}, wpisany do rejestru przedsiębiorców Centralnej Ewidencji i Informacji o Działalności Gospodarczej prowadzonej przez ministra właściwego ds. gospodarki pod adresem {COMPANY_DATA.address}, {COMPANY_DATA.zip} {COMPANY_DATA.city}, NIP {COMPANY_DATA.nip}, REGON {COMPANY_DATA.regon}, zwany dalej Sprzedawcą.</p>
-        <p className="mt-2">Kontakt ze Sprzedawcą odbywa się poprzez:</p>
-        <ul className="list-disc pl-5 mt-1 space-y-1 marker:text-[#5c6b50]">
-          <li>adres poczty elektronicznej: {COMPANY_DATA.email};</li>
-          <li>pod numerem telefonu: {COMPANY_DATA.phone};</li>
-          <li>formularz kontaktowy dostępny na stronach Sklepu Internetowego.</li>
-        </ul>
-        <p className="mt-2">Niniejszy Regulamin jest nieprzerwanie dostępny w witrynie internetowej, w sposób umożliwiający jego pozyskanie, odtwarzanie i utrwalanie jego treści poprzez wydrukowanie lub zapisanie na nośniku w każdej chwili.</p>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">§ 1. Postanowienia ogólne</h3>
+        <p>1. Sklep internetowy dostępny pod adresem internetowym www.spiderra.pl prowadzony jest przez Arkadiusza Kołackiego, prowadzącego działalność nierejestrowaną (zgodnie z art. 5 ust. 1 ustawy z dnia 6 marca 2018 r. – Prawo przedsiębiorców), z siedzibą: {COMPANY_DATA.address}, {COMPANY_DATA.zip} {COMPANY_DATA.city}.</p>
+        <p>2. Kontakt ze Sprzedawcą możliwy jest pod adresem e-mail: {COMPANY_DATA.email}.</p>
+        <p>3. Regulamin określa zasady zawierania umów sprzedaży za pośrednictwem sklepu, zasady wykonywania tych umów oraz prawa i obowiązki Sprzedawcy i Klienta.</p>
       </section>
        
       <section>
-        <h3 className="font-bold text-[#44403c] text-base mb-3">II. Definicje</h3>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">§ 2. Produkty i Ceny</h3>
         <ul className="list-disc pl-5 mt-1 space-y-1 marker:text-[#5c6b50]">
-           <li><strong>Klient</strong> – osoba fizyczna posiadająca pełną zdolność do czynności prawnych, osoba prawna lub jednostka organizacyjna nieposiadająca osobowości prawnej.</li>
-           <li><strong>Konsument</strong> – Klient będący osobą fizyczną dokonującą z przedsiębiorcą czynności prawnej niezwiązanej bezpośrednio z jej działalnością gospodarczą lub zawodową.</li>
-           <li><strong>Towar</strong> – produkt (w tym żywe zwierzę) prezentowany w Sklepie Internetowym.</li>
-           <li><strong>Umowa Sprzedaży</strong> – umowa sprzedaży Towaru zawierana albo zawarta między Klientem a Sprzedawcą za pośrednictwem Sklepu Internetowego.</li>
+           <li>Produkty dostępne w sklepie są nowe (akcesoria) lub są żywymi zwierzętami (ptaszniki) pochodzącymi z legalnej hodowli.</li>
+           <li>Sprzedawca oświadcza, że oferowane gatunki zwierząt są dopuszczone do obrotu na terenie Polski. W przypadku gatunków z listy CITES, do zakupu dołączany jest odpowiedni dokument potwierdzający urodzenie w niewoli.</li>
+           <li>Ceny podane w sklepie są cenami brutto (zawierają wszystkie podatki). Sprzedawca korzysta ze zwolnienia z podatku VAT.</li>
         </ul>
       </section>
 
       <section>
-        <h3 className="font-bold text-[#44403c] text-base mb-3">III. Warunki zawierania Umowy Sprzedaży</h3>
-        <p>1. Zawarcie Umowy Sprzedaży między Klientem a Sprzedawcą następuje po uprzednim złożeniu przez Klienta Zamówienia za pomocą Formularza Zamówienia w Sklepie Internetowym.</p>
-        <p>2. Cena Produktu uwidoczniona na stronie Sklepu Internetowego podana jest w złotych polskich i zawiera podatki. Cena nie zawiera kosztów dostawy, które są wskazywane w trakcie składania Zamówienia.</p>
-        <p>3. Płatności obsługiwane są przez zewnętrznego operatora płatności (Stripe), co gwarantuje bezpieczeństwo transakcji.</p>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">§ 3. Płatności i Dostawa</h3>
+        <p>1. Klient może wybrać następujące formy płatności: szybkie płatności online (BLIK, karta) obsługiwane przez operatora Stripe.</p>
+        <p>2. Wysyłka towarów realizowana jest na terenie Polski.</p>
+        <p>3. Wysyłka <strong>żywych zwierząt</strong> odbywa się wyłącznie od poniedziałku do środy.</p>
+        <p>4. W przypadku skrajnych warunków atmosferycznych, Sprzedawca zastrzega sobie prawo do wstrzymania wysyłki.</p>
       </section>
 
       <section>
-        <h3 className="font-bold text-[#44403c] text-base mb-3">IV. Dostawa i Odbiór</h3>
-        <p>1. Dostawa Towaru realizowana jest na terenie Polski.</p>
-        <p>2. Dostawa odbywa się w dni robocze, od poniedziałku do piątku (akcesoria) lub od poniedziałku do środy (żywe zwierzęta).</p>
-        <p>3. Sprzedawca stosuje politykę "Live Arrival Guarantee" (LAG) szczegółowo opisaną w zakładce "Wysyłka i Zwroty".</p>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">§ 4. Prawo odstąpienia od umowy (Zwroty)</h3>
+        <p>1. Konsumentowi przysługuje prawo do odstąpienia od umowy w terminie 14 dni bez podania przyczyny, z zastrzeżeniem ust. 2.</p>
+        <p>2. <strong>Wyłączenie prawa zwrotu:</strong> Zgodnie z art. 38 pkt 4 ustawy o prawach konsumenta, prawo odstąpienia od umowy zawartej na odległość <strong>nie przysługuje</strong> Konsumentowi w odniesieniu do umów, w której przedmiotem świadczenia jest rzecz ulegająca szybkiemu zepsuciu lub mająca krótki termin przydatności do użycia. Zapis ten dotyczy żywych zwierząt (ptaszników).</p>
       </section>
 
       <section>
-        <h3 className="font-bold text-[#44403c] text-base mb-3">V. Prawo odstąpienia od umowy</h3>
-        <p>1. Konsumentowi przysługuje prawo do odstąpienia od umowy w terminie 14 dni bez podania przyczyny (z zastrzeżeniem wyjątków określonych w ustawie).</p>
-        <p>2. Prawo to nie przysługuje w odniesieniu do umów, w których przedmiotem świadczenia jest rzecz ulegająca szybkiemu zepsuciu lub mająca krótki termin przydatności do użycia.</p>
-      </section>
-
-      <section>
-        <h3 className="font-bold text-[#44403c] text-base mb-3">VI. Postanowienia końcowe</h3>
-        <p>W sprawach nieuregulowanych w niniejszym Regulaminie mają zastosowanie powszechnie obowiązujące przepisy prawa polskiego, w szczególności: Kodeksu cywilnego, ustawy o świadczeniu usług drogą elektroniczną, ustawy o prawach konsumenta, ustawy o ochronie danych osobowych.</p>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">§ 5. Reklamacje</h3>
+        <p>Sprzedawca odpowiada wobec Klienta, jeżeli sprzedany produkt ma wadę fizyczną lub prawną. W przypadku żywych zwierząt stosuje się zasady LAG opisane w zakładce "Wysyłka i Zwroty".</p>
       </section>
 
     </div>
@@ -1317,34 +1350,38 @@ const PrivacyView = memo(() => (
     <div className="prose prose-stone max-w-none text-[#78716c] leading-relaxed space-y-8 text-sm font-light">
       <section>
         <h3 className="font-bold text-[#44403c] text-base mb-3">1. Administrator Danych</h3>
-        <p>Administratorem Twoich danych osobowych jest {COMPANY_DATA.name}, z siedzibą w {COMPANY_DATA.city}, przy ul. {COMPANY_DATA.address}, posiadający NIP: {COMPANY_DATA.nip} oraz REGON: {COMPANY_DATA.regon}.</p>
-        <p>Kontakt z Administratorem jest możliwy drogą elektroniczną pod adresem: {COMPANY_DATA.email} lub telefonicznie: {COMPANY_DATA.phone}.</p>
+        <p>Administratorem Twoich danych osobowych jest {COMPANY_DATA.name}, z siedzibą w {COMPANY_DATA.city}, przy ul. {COMPANY_DATA.address}. Kontakt: {COMPANY_DATA.email}.</p>
       </section>
 
       <section>
-        <h3 className="font-bold text-[#44403c] text-base mb-3">2. Cele i podstawy przetwarzania</h3>
-        <p>Przetwarzamy Twoje dane w celach:</p>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">2. Cel przetwarzania</h3>
+        <p>Przetwarzamy Twoje dane (imię, nazwisko, adres, e-mail, telefon) wyłącznie w celu:</p>
         <ul className="list-disc pl-5 mt-1 space-y-1 marker:text-[#5c6b50]">
-           <li>zawarcia i wykonania umowy sprzedaży (art. 6 ust. 1 lit. b RODO),</li>
-           <li>realizacji obowiązków prawnych, np. wystawiania faktur (art. 6 ust. 1 lit. c RODO),</li>
-           <li>dochodzenia roszczeń i obrony przed nimi (art. 6 ust. 1 lit. f RODO),</li>
-           <li>analitycznych i statystycznych (art. 6 ust. 1 lit. f RODO).</li>
+           <li>Realizacji zamówienia i wysyłki towaru (art. 6 ust. 1 lit. b RODO).</li>
+           <li>Obsługi płatności i ewentualnych reklamacji.</li>
+           <li>Kontaktu w sprawie zamówienia.</li>
         </ul>
       </section>
 
       <section>
         <h3 className="font-bold text-[#44403c] text-base mb-3">3. Odbiorcy danych</h3>
-        <p>Twoje dane mogą być przekazywane podmiotom, które pomagają nam prowadzić sklep, np.: firmom kurierskim (InPost, DPD) w celu dostawy, operatorowi płatności (Stripe) w celu realizacji zapłaty, dostawcy hostingu i usług IT.</p>
+        <p>Twoje dane przekazujemy tylko podmiotom niezbędnym do realizacji zamówienia: operatorowi płatności (Stripe) oraz firmom kurierskim (Poczta Polska, InPost) w celu dostarczenia paczki.</p>
       </section>
 
       <section>
-        <h3 className="font-bold text-[#44403c] text-base mb-3">4. Prawa użytkownika</h3>
-        <p>Przysługuje Ci prawo do dostępu do swoich danych, ich sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia danych, wniesienia sprzeciwu oraz wniesienia skargi do organu nadzorczego (Prezesa UODO).</p>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">4. Pliki Cookies (Ciasteczka)</h3>
+        <p>Nasza strona używa plików cookies w minimalnym zakresie. Nie stosujemy cookies śledzących ani marketingowych.</p>
+        <p>Używamy wyłącznie <strong>niezbędnych plików cookies</strong>, które są wymagane do:</p>
+        <ul className="list-disc pl-5 mt-1 space-y-1 marker:text-[#5c6b50]">
+           <li>Prawidłowego działania koszyka zakupowego.</li>
+           <li>Bezpiecznej realizacji płatności przez Stripe.</li>
+        </ul>
+        <p className="mt-2">Zgodnie z Prawem Telekomunikacyjnym, korzystanie z niezbędnych plików cookies nie wymaga odrębnej zgody (banera), a jedynie tej informacji.</p>
       </section>
 
       <section>
-        <h3 className="font-bold text-[#44403c] text-base mb-3">5. Pliki Cookies</h3>
-        <p>Sklep używa plików cookies (ciasteczka) w celu zapewnienia prawidłowego działania strony (np. utrzymania sesji koszyka) oraz w celach statystycznych. Możesz zarządzać ustawieniami cookies w swojej przeglądarce.</p>
+        <h3 className="font-bold text-[#44403c] text-base mb-3">5. Twoje prawa</h3>
+        <p>Masz prawo do wglądu w swoje dane, ich poprawiania oraz żądania ich usunięcia (o ile nie kłóci się to z obowiązkiem przechowywania dokumentacji sprzedażowej).</p>
       </section>
     </div>
   </div>
@@ -1353,7 +1390,8 @@ const PrivacyView = memo(() => (
 // --- GŁÓWNA APLIKACJA ---
 function AppContent() {
   const [activeView, setActiveView] = useState('home');
-  const [products, setProducts] = useState([]);
+  // ZMIANA 1: Inicjalizujemy stan produktami z MOCK_PRODUCTS_DATA dla natychmiastowego renderu
+  const [products, setProducts] = useState(MOCK_PRODUCTS_DATA);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -1409,6 +1447,7 @@ function AppContent() {
         if (!res.ok) throw new Error();
         let data = await res.json();
          
+        // NORMALIZACJA DANYCH ZE STRIPE
         data = data.map(product => ({
             ...product,
             tags: typeof product.tags === 'string' ? product.tags.split(',').map(t => t.trim()) : (product.tags || []),
@@ -1416,9 +1455,12 @@ function AppContent() {
             latin: product.latin || '',
         }));
 
-        setProducts(data.length > 0 ? data : MOCK_PRODUCTS_DATA);
-      } catch {
-        setProducts(MOCK_PRODUCTS_DATA);
+        // ZMIANA 2: Jeśli przyszły dane, nadpisujemy mocka
+        if (data && data.length > 0) {
+            setProducts(data);
+        }
+      } catch (e) {
+        console.log("Ładowanie produktów ze Stripe nie powiodło się, używam danych testowych.");
       } finally {
         setLoading(false);
       }
@@ -1498,7 +1540,7 @@ function AppContent() {
       <nav className="fixed top-0 w-full bg-[#faf9f6]/90 backdrop-blur-md z-[80] border-b border-[#e7e5e4] h-20 flex items-center shadow-sm">
         <div className="max-w-7xl mx-auto w-full px-6 flex justify-between items-center">
           <div className="cursor-pointer flex items-center" onClick={() => navigate('home')}>
-            <img src={LOGO_URL} alt="Spiderra" className="h-40 w-auto object-contain" />
+            <img src={LOGO_URL} alt="Spiderra" className="h-14 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-8">
             <div className="hidden md:flex gap-8 text-sm font-medium text-[#78716c]">
@@ -1636,7 +1678,7 @@ function AppContent() {
         </div>
       )}
 
-      {/* Stopka (bez zmian) */}
+      {/* Stopka */}
       <footer className="bg-white border-t border-[#e7e5e4] pt-20 pb-12 mt-auto">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
@@ -1671,9 +1713,9 @@ function AppContent() {
 
             <div>
               <h4 className="font-bold text-[#44403c] uppercase tracking-widest text-xs mb-6">Kontakt</h4>
-              <p className="text-sm font-medium mb-2">{COMPANY_DATA.email}</p>
-              <p className="text-sm font-medium mb-6">{COMPANY_DATA.phone}</p>
-              <div className="text-xs leading-relaxed">
+              <p className="text-sm font-medium text-[#78716c] mb-2">{COMPANY_DATA.email}</p>
+              <p className="text-sm font-medium text-[#78716c] mb-6">{COMPANY_DATA.phone}</p>
+              <div className="text-xs text-[#a8a29e] font-light leading-relaxed">
                   <p>{COMPANY_DATA.name}</p>
                   <p>ul. {COMPANY_DATA.address}</p>
                   <p>{COMPANY_DATA.zip} {COMPANY_DATA.city}</p>
