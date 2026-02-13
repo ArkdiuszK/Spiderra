@@ -328,7 +328,7 @@ const TravelGallery = memo(({ navigateTo }) => {
       <div className="max-w-7xl mx-auto px-6 mb-16 text-center">
          <span className="text-xs font-bold text-spider-gold uppercase tracking-[0.2em] mb-4 block">Ekspedycje</span>
          <h3 className="font-serif text-4xl md:text-6xl text-spider-dark mb-6">Dziennik Podróży</h3>
-         <p className="text-spider-dark/60 font-light max-w-2xl mx-auto leading-relaxed">Świat widziany oczami pasjonata. Miejsca, w których natura wciąż dyktuje warunki, a odkrywanie nowych gatunków to codzienność.</p>
+         <p className="text-spider-dark/60 font-light max-w-2xl mx-auto leading-relaxed">A oto kraje, które już odwiedziłem...</p>
       </div>
       <div className="space-y-10 group">
         <div className="relative w-full overflow-hidden">
@@ -582,7 +582,7 @@ const AboutView = memo(() => (
     <div className="flex flex-col md:flex-row gap-20 items-center mb-32">
        <div className="w-full md:w-1/2 relative group">
           <div className="absolute -top-6 -left-6 w-full h-full border-2 border-spider-gold z-0 transition-transform group-hover:translate-x-2 group-hover:translate-y-2"></div>
-          <img src="/zdjecia/arek.png" alt="Arek" className="relative z-10 w-full grayscale hover:grayscale-0 transition-all duration-700 shadow-2xl" loading="lazy" decoding="async"/>
+          <img src="/zdjecia/arek.png" alt="Arek" className="relative z-10 w-full transition-all duration-700 shadow-2xl" loading="lazy" decoding="async"/>
        </div>
        <div className="w-full md:w-1/2">
           <span className="text-spider-gold font-bold uppercase tracking-[0.25em] text-xs mb-6 block">Historia Marki</span>
