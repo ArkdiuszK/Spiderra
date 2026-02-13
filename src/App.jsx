@@ -739,7 +739,7 @@ const StreamView = memo(() => (
         </div>
         <div className="p-10 bg-[#151413] flex justify-between items-center">
            <div className="flex items-center gap-6">
-              <img src={LOGO_URL2} alt="Logo" className="w-16"/>
+              <img src={LOGO_URL} alt="Logo" className="w-16 opacity-40 grayscale"/>
               <div className="border-l border-white/10 pl-6">
                  <p className="text-spider-gold uppercase tracking-widest text-[10px] font-bold mb-1">Następna wyprawa</p>
                  <p className="text-white font-serif text-2xl">Gruzja 04.2026</p>
@@ -828,11 +828,69 @@ const AppContent = () => {
   const [products] = useState(MOCK_PRODUCTS_DATA);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  // Dodano 'toast' do destrukturyzacji, aby naprawić ReferenceError
-  const { cart, isCartOpen, setIsCartOpen, addToCart, removeFromCart, updateQty, cartTotal, hasLiveAnimals, toast } = useCart();
+  
+  // Dodano stany potrzebne do obsługi płatności
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [lastOrder, setLastOrder] = useState(null);
+
+  const { cart, setCart, isCartOpen, setIsCartOpen, addToCart, removeFromCart, updateQty, cartTotal, hasLiveAnimals, toast, showToast } = useCart();
 
   const navigate = (view) => { setActiveView(view); setSelectedProduct(null); setIsMobileMenuOpen(false); window.scrollTo({top:0, behavior:'smooth'}); };
   const openProduct = (p) => { setSelectedProduct(p); navigate('shop'); window.scrollTo({top:0, behavior:'smooth'}); };
+
+  // Obsługa powrotu z płatności (sukces/anulowanie)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('success')) {
+      const savedCart = localStorage.getItem('pendingCart');
+      if (savedCart) {
+        setLastOrder(JSON.parse(savedCart));
+        localStorage.removeItem('pendingCart');
+        setCart([]);
+        setActiveView('success');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } else if (params.get('canceled')) {
+      showToast("Płatność została anulowana.", "error");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [setCart, showToast]);
+
+  // Funkcja obsługująca płatność
+  const handleCheckout = async () => {
+    if (cart.length === 0) return;
+    
+    // Zapisz koszyk w localStorage przed przekierowaniem, aby móc go odczytać po powrocie (sukces)
+    localStorage.setItem('pendingCart', JSON.stringify(cart));
+    
+    setCheckoutLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: cart }),
+      });
+
+      if (!res.ok) {
+         const errData = await res.json().catch(() => ({}));
+         throw new Error(errData.error || `Błąd serwera: ${res.status}`);
+      }
+
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('Brak linku do płatności w odpowiedzi serwera.');
+      }
+    } catch (e) {
+      console.error("Błąd płatności:", e);
+      showToast(e.message || "Wystąpił błąd podczas płatności.", 'error');
+      // W razie błędu nie czyścimy pendingCart, aby użytkownik nie stracił koszyka, 
+      // ale w tym przypadku pendingCart służy tylko do SuccessView, więc to ok.
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-spider-base text-spider-dark font-sans selection:bg-spider-gold selection:text-white flex flex-col overflow-x-hidden">
@@ -931,7 +989,13 @@ const AppContent = () => {
                      <span className="text-xs uppercase font-bold tracking-widest text-spider-dark/50">Suma zamówienia</span>
                      <span className="font-serif text-4xl text-spider-dark">{cartTotal.toFixed(2)} <span className="text-lg font-sans text-spider-dark/40 font-light">PLN</span></span>
                  </div>
-                 <button className="w-full py-5 bg-spider-dark text-white font-bold uppercase tracking-[0.2em] text-xs hover:bg-spider-gold transition-all shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:shadow-none" disabled={cart.length===0}>Przejdź do kasy</button>
+                 <button 
+                    onClick={handleCheckout} 
+                    className="w-full py-5 bg-spider-dark text-white font-bold uppercase tracking-[0.2em] text-xs hover:bg-spider-gold transition-all shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:shadow-none flex justify-center items-center gap-3" 
+                    disabled={cart.length === 0 || checkoutLoading}
+                 >
+                    {checkoutLoading ? <Icons.Loader className="w-5 h-5 text-white" /> : "PRZEJDŹ DO PŁATNOŚCI"}
+                 </button>
               </div>
            </div>
         </div>
@@ -988,7 +1052,7 @@ const AppContent = () => {
             </div>
          </div>
          <div className="max-w-7xl mx-auto px-6 mt-20 pt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-xs text-white/30 uppercase tracking-widest gap-4">
-            <p>© 2026 Spiderra Arkadiusz Kołacki</p>
+            <p>2026 Spiderra© Arkadiusz Kołacki</p>
             <div className="flex gap-6 items-center">
                 <span className="flex items-center gap-2"><Icons.Lock className="w-3 h-3"/> SSL Secured</span>
                 <span className="flex items-center gap-2">Bezpieczne płatności</span>
