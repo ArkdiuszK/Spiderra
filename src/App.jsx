@@ -762,7 +762,7 @@ const AppContent = () => {
 
           try {
              // Zmiana endpointu na /getproduct
-             const res = await fetch(`${API_URL}/getproduct`);
+             const res = await fetch(`${API_URL}/get-products`);
              if (res.ok) {
                  const data = await res.json();
                  const normalized = data.map(p => ({
@@ -799,7 +799,7 @@ const AppContent = () => {
 
     try {
       // Zmiana endpointu na /createsession
-      const res = await fetch(`${API_URL}/createsession`, {
+      const res = await fetch(`${API_URL}/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items: cart }),
