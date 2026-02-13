@@ -60,7 +60,7 @@ exports.handler = async (event, context) => {
 
     // Tworzenie sesji płatności w Stripe
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card', 'blik', 'p24'], 
+      payment_method_types: ['card', 'blik'], 
       locale: 'pl',
       line_items: items.map(item => {
           // Obsługa wariantów cenowych ze Stripe (jeśli mają stripeId)
