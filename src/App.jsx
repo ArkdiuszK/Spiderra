@@ -61,13 +61,13 @@ const getApiUrl = () => {
     const hostname = window.location.hostname;
     const protocol = window.location.protocol;
 
-    // Lokalne środowisko
+    // Lokalne środowisko (np. npm start)
     if (hostname === 'localhost' || hostname === '127.0.0.1') return 'http://localhost:4242';
     
-    // Środowisko podglądu (brak backendu)
+    // Środowisko podglądu Canvas (brak backendu)
     if (protocol === 'blob:' || hostname.includes('sandbox') || hostname.includes('usercontent') || hostname.includes('google')) return 'SIMULATION'; 
     
-    // Produkcja (Netlify)
+    // Produkcja (Netlify Functions) - ścieżka relatywna
     return '/.netlify/functions';
 };
 const API_URL = getApiUrl();
@@ -106,21 +106,11 @@ const PRODUCT_CATEGORIES = [
   }
 ];
 
-const MOCK_PRODUCTS_DATA = [
-  { id: 'spider1', name: 'Grammostola rosea', latin: 'Grammostola rosea', type: 'spider', tags: ['terrestrial', 'beginner', 'bestseller', 'female'], price: 150.00, image: '/zdjecia/ptaszniki/grammostola_rosea.jpg', desc: 'Ptasznik z Chile, znany ze swojego spokojnego usposobienia i łatwości hodowli. Gatunek naziemny, idealny dla początkujących.' },
-  { id: 'spider2', name: 'Caribena versicolor', latin: 'Caribena versicolor', type: 'spider', tags: ['arboreal', 'beginner', 'bestseller', 'unsexed'], price: 85.00, image: 'https://placehold.co/400x300/e2e8f0/10b981?text=Versicolor', desc: 'Jeden z najpiękniejszych ptaszników nadrzewnych. Dzięki łagodnemu usposobieniu nadaje się na pierwszego pająka nadrzewnego.' },
-  { id: 'spider3', name: 'Theraphosa stirmi', latin: 'Theraphosa stirmi', type: 'spider', tags: ['terrestrial', 'advanced', 'rare', 'sold_out', 'female'], price: 450.00, image: 'https://placehold.co/400x300/e2e8f0/991b1b?text=Stirmi', desc: 'Jeden z największych pająków świata. Wymaga doświadczenia w utrzymaniu odpowiedniej wilgotności.' },
-  { id: 'kit_s', name: 'Zestaw S "Plecak"', latin: 'Dla L1-L3', type: 'gear', tags: ['container', 'bestseller'], price: 11.99, image: 'https://placehold.co/400x300/f1f5f9/64748b?text=Zestaw+S', desc: 'Najlepszy start dla malucha (L1-L3). W skład zestawu wchodzi profesjonalny pojemnik hodowlany typu Breeding Box (5x5x7cm).', variants: [{ id: 'eco', name: 'Economy', price: 11.99, desc: 'Pojemnik + Torf', stripeId: 'price_PLACEHOLDER_ECO_S' }, { id: 'biz', name: 'Business', price: 14.99, desc: 'Pojemnik + Torf + Kora', stripeId: 'price_PLACEHOLDER_BIZ_S' }, { id: 'first', name: 'First Class', price: 17.99, desc: 'Premium + Mech + Ozdoby', stripeId: 'price_PLACEHOLDER_FIRST_S' }] },
-  { id: 'kit_m', name: 'Zestaw "Walizka podręczna"', latin: 'Dla L4-L7', type: 'gear', tags: ['container'], price: 39.99, image: 'https://placehold.co/400x300/f1f5f9/a8a29e?text=Zestaw+M', desc: 'Komfortowa przesiadka do klasy biznes dla podrostków (L4-L7). Sercem zestawu jest przestronny box hodowlany (19x12,5x7,5 cm).', variants: [{ id: 'eco', name: 'Economy', price: 39.99, desc: 'Moczbox + Torf', stripeId: 'price_PLACEHOLDER_ECO_M' }, { id: 'biz', name: 'Business', price: 49.00, desc: 'Braplast + Tuba', stripeId: 'price_PLACEHOLDER_BIZ_M' }, { id: 'first', name: 'First Class', price: 65.00, desc: 'Full Opcja', stripeId: 'price_PLACEHOLDER_FIRST_M' }] },
-  { id: 'kit_l', name: 'Zestaw "Bagaż rejestrowany"', latin: 'Dla Dorosłych', type: 'gear', tags: ['container'], price: 72.99, image: 'https://placehold.co/400x300/f1f5f9/78716c?text=Zestaw+L', desc: 'Luksusowa rezydencja dla dorosłych gigantów. Box 32x22x15 cm.', variants: [{ id: 'eco', name: 'Economy', price: 72.99, desc: 'Box + Torf', stripeId: 'price_PLACEHOLDER_ECO_L' }, { id: 'biz', name: 'Business', price: 89.00, desc: 'Duży Braplast + Tuba', stripeId: 'price_PLACEHOLDER_BIZ_L' }, { id: 'first', name: 'First Class', price: 129.00, desc: 'Full Opcja', stripeId: 'price_PLACEHOLDER_FIRST_L' }] },
-  { id: 'gear2', name: 'Włókno kokosowe', latin: 'Substrat', type: 'gear', tags: ['substrate', 'bestseller'], price: 15.00, image: 'https://placehold.co/400x300/f1f5f9/a8a29e?text=Włókno', desc: 'Podstawowe podłoże do terrariów.' },
-  { id: 'gear3', name: 'Pęseta długa', latin: '30 cm', type: 'gear', tags: ['tools'], price: 25.00, image: 'https://placehold.co/400x300/e2e8f0/64748b?text=Pęseta', desc: 'Niezbędne narzędzie do karmienia.' },
-];
-
 // --- IKONY ---
 const IconBase = ({ children, className, ...props }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>
 );
+
 const Icons = {
   ShoppingCart: (p) => <IconBase {...p}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></IconBase>,
   Menu: (p) => <IconBase {...p}><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></IconBase>,
@@ -148,6 +138,18 @@ const Icons = {
   Loader: (p) => <IconBase {...p} className={`animate-spin ${p.className}`}><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></IconBase>,
   ArrowUp: (p) => <IconBase {...p}><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></IconBase>
 };
+
+// --- DANE PRODUKTÓW (MOCK - używane gdy backend nie odpowiada) ---
+const MOCK_PRODUCTS_DATA = [
+  { id: 'spider1', name: 'Grammostola rosea', latin: 'Grammostola rosea', type: 'spider', tags: ['terrestrial', 'beginner', 'bestseller', 'female'], price: 150.00, image: '/zdjecia/ptaszniki/grammostola_rosea.jpg', desc: 'Ptasznik z Chile, znany ze swojego spokojnego usposobienia i łatwości hodowli. Gatunek naziemny, idealny dla początkujących.' },
+  { id: 'spider2', name: 'Caribena versicolor', latin: 'Caribena versicolor', type: 'spider', tags: ['arboreal', 'beginner', 'bestseller', 'unsexed'], price: 85.00, image: 'https://placehold.co/400x300/e2e8f0/10b981?text=Versicolor', desc: 'Jeden z najpiękniejszych ptaszników nadrzewnych. Dzięki łagodnemu usposobieniu nadaje się na pierwszego pająka nadrzewnego.' },
+  { id: 'spider3', name: 'Theraphosa stirmi', latin: 'Theraphosa stirmi', type: 'spider', tags: ['terrestrial', 'advanced', 'rare', 'sold_out', 'female'], price: 450.00, image: 'https://placehold.co/400x300/e2e8f0/991b1b?text=Stirmi', desc: 'Jeden z największych pająków świata. Wymaga doświadczenia w utrzymaniu odpowiedniej wilgotności.' },
+  { id: 'kit_s', name: 'Zestaw S "Plecak"', latin: 'Dla L1-L3', type: 'gear', tags: ['container', 'bestseller'], price: 11.99, image: 'https://placehold.co/400x300/f1f5f9/64748b?text=Zestaw+S', desc: 'Najlepszy start dla malucha (L1-L3). W skład zestawu wchodzi profesjonalny pojemnik hodowlany typu Breeding Box (5x5x7cm).', variants: [{ id: 'eco', name: 'Economy', price: 11.99, desc: 'Pojemnik + Torf', stripeId: 'price_PLACEHOLDER_ECO_S' }, { id: 'biz', name: 'Business', price: 14.99, desc: 'Pojemnik + Torf + Kora', stripeId: 'price_PLACEHOLDER_BIZ_S' }, { id: 'first', name: 'First Class', price: 17.99, desc: 'Premium + Mech + Ozdoby', stripeId: 'price_PLACEHOLDER_FIRST_S' }] },
+  { id: 'kit_m', name: 'Zestaw "Walizka podręczna"', latin: 'Dla L4-L7', type: 'gear', tags: ['container'], price: 39.99, image: 'https://placehold.co/400x300/f1f5f9/a8a29e?text=Zestaw+M', desc: 'Komfortowa przesiadka do klasy biznes dla podrostków (L4-L7). Sercem zestawu jest przestronny box hodowlany (19x12,5x7,5 cm).', variants: [{ id: 'eco', name: 'Economy', price: 39.99, desc: 'Moczbox + Torf', stripeId: 'price_PLACEHOLDER_ECO_M' }, { id: 'biz', name: 'Business', price: 49.00, desc: 'Braplast + Tuba', stripeId: 'price_PLACEHOLDER_BIZ_M' }, { id: 'first', name: 'First Class', price: 65.00, desc: 'Full Opcja', stripeId: 'price_PLACEHOLDER_FIRST_M' }] },
+  { id: 'kit_l', name: 'Zestaw "Bagaż rejestrowany"', latin: 'Dla Dorosłych', type: 'gear', tags: ['container'], price: 72.99, image: 'https://placehold.co/400x300/f1f5f9/78716c?text=Zestaw+L', desc: 'Luksusowa rezydencja dla dorosłych gigantów. Box 32x22x15 cm.', variants: [{ id: 'eco', name: 'Economy', price: 72.99, desc: 'Box + Torf', stripeId: 'price_PLACEHOLDER_ECO_L' }, { id: 'biz', name: 'Business', price: 89.00, desc: 'Duży Braplast + Tuba', stripeId: 'price_PLACEHOLDER_BIZ_L' }, { id: 'first', name: 'First Class', price: 129.00, desc: 'Full Opcja', stripeId: 'price_PLACEHOLDER_FIRST_L' }] },
+  { id: 'gear2', name: 'Włókno kokosowe', latin: 'Substrat', type: 'gear', tags: ['substrate', 'bestseller'], price: 15.00, image: 'https://placehold.co/400x300/f1f5f9/a8a29e?text=Włókno', desc: 'Podstawowe podłoże do terrariów.' },
+  { id: 'gear3', name: 'Pęseta długa', latin: '30 cm', type: 'gear', tags: ['tools'], price: 25.00, image: 'https://placehold.co/400x300/e2e8f0/64748b?text=Pęseta', desc: 'Niezbędne narzędzie do karmienia.' },
+];
 
 // --- HOOKS ---
 const useCart = () => {
@@ -719,7 +721,7 @@ const ShippingReturnsView = () => (
 // --- APP CONTENT ---
 const AppContent = () => {
   const [activeView, setActiveView] = useState('home');
-  const [products] = useState(MOCK_PRODUCTS_DATA);
+  const [products, setProducts] = useState(MOCK_PRODUCTS_DATA);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -728,7 +730,13 @@ const AppContent = () => {
   const { cart, isCartOpen, setIsCartOpen, addToCart, removeFromCart, updateQty, cartTotal, hasLiveAnimals, toast, showToast, setCart } = useCart();
 
   const navigate = (view) => { setActiveView(view); setSelectedProduct(null); setIsMobileMenuOpen(false); window.scrollTo({top:0, behavior:'smooth'}); };
-  const openProduct = (p) => { setSelectedProduct(p); navigate('shop'); window.scrollTo({top:0, behavior:'smooth'}); };
+  
+  // FIX: Separate openProduct logic to NOT clear state immediately
+  const openProduct = (p) => { 
+      setSelectedProduct(p); 
+      setActiveView('shop'); 
+      window.scrollTo({top:0, behavior:'smooth'}); 
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -747,6 +755,32 @@ const AppContent = () => {
     }
   }, [setCart, showToast]);
 
+  // FIX: Enable fetching from backend if available
+  useEffect(() => {
+      const fetchProducts = async () => {
+          if (API_URL === 'SIMULATION') return;
+
+          try {
+             // Zmiana endpointu na /getproduct
+             const res = await fetch(`${API_URL}/getproduct`);
+             if (res.ok) {
+                 const data = await res.json();
+                 const normalized = data.map(p => ({
+                     ...p,
+                     tags: Array.isArray(p.tags) ? p.tags : (p.tags ? p.tags.split(',') : []),
+                     price: Number(p.price)
+                 }));
+                 if (normalized.length > 0) {
+                    setProducts(normalized);
+                 }
+             }
+          } catch(e) {
+             console.log("Błąd pobierania produktów (fallback do mocka):", e);
+          }
+      };
+      fetchProducts();
+  }, []);
+
   const handleCheckout = async () => {
     if (cart.length === 0) return;
     localStorage.setItem('pendingCart', JSON.stringify(cart));
@@ -764,7 +798,8 @@ const AppContent = () => {
     }
 
     try {
-      const res = await fetch(`${API_URL}/create-checkout-session`, {
+      // Zmiana endpointu na /createsession
+      const res = await fetch(`${API_URL}/createsession`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items: cart }),
@@ -795,7 +830,7 @@ const AppContent = () => {
       <nav className="fixed top-0 w-full z-50 bg-spider-base/95 backdrop-blur-md border-b border-spider-sand h-24 transition-all">
          <div className="max-w-7xl mx-auto px-6 h-full flex justify-between items-center">
             <div className="cursor-pointer flex items-center gap-2 group" onClick={() => navigate('home')}>
-               <img src={LOGO_URL} alt="Spiderra" className="h-12 w-auto object-contain group-hover:scale-105 transition-transform duration-500" />
+               <img src={LOGO_URL} alt="Spiderra" className="h-40 w-auto object-contain group-hover:scale-105 transition-transform duration-500" />
             </div>
             
             <div className="hidden md:flex gap-10 text-xs font-bold uppercase tracking-[0.15em] text-spider-dark/60">
@@ -915,7 +950,7 @@ const AppContent = () => {
          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-16">
             <div className="col-span-1 md:col-span-1 pr-4">
                <div className="flex items-center gap-4 mb-8 opacity-90">
-                  <img src={LOGO_URL} className="h-16 w-auto object-contain invert brightness-0"/>
+                  <img src={LOGO_URL2} className="h-16 w-auto object-contain"/>
                   <span className="font-serif text-2xl font-bold tracking-wide">SPIDERRA</span>
                </div>
                <p className="text-white/50 text-sm leading-loose font-light">Profesjonalna hodowla i sklep stworzony z pasji do natury. Jakość, etyka i edukacja w jednym miejscu. Dołącz do naszej społeczności.</p>
